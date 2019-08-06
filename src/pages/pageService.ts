@@ -3,6 +3,7 @@ import { PageContract, IPageService } from "../pages";
 import { IObjectStorage, Operator, Query } from "../persistence";
 import { IBlockService } from "../blocks";
 import { Contract } from "../contract";
+import { ILocaleService } from "../localization";
 
 const pagesPath = "pages";
 const documentsPath = "files";
@@ -11,7 +12,8 @@ const templateBlockKey = "blocks/new-page-template";
 export class PageService implements IPageService {
     constructor(
         private readonly objectStorage: IObjectStorage,
-        private readonly blockService: IBlockService
+        private readonly blockService: IBlockService,
+        private readonly localeService: ILocaleService
     ) { }
 
     public async getPageByPermalink(permalink: string): Promise<PageContract> {
@@ -59,7 +61,7 @@ export class PageService implements IPageService {
         await Promise.all([deleteContentPromise, deletePagePromise]);
     }
 
-    public async createPage(permalink: string, title: string, description: string, keywords: string): Promise<PageContract> {
+    public async createPage(permalink: string, title: string, description: string, keywords: string): Promise<void> {
         const identifier = Utils.guid();
         const pageKey = `${pagesPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;
@@ -78,8 +80,6 @@ export class PageService implements IPageService {
         const template = await this.blockService.getBlockContent(templateBlockKey);
 
         await this.objectStorage.addObject(contentKey, template);
-
-        return page;
     }
 
     public async updatePage(page: PageContract): Promise<void> {

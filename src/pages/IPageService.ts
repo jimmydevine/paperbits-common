@@ -36,7 +36,7 @@ export interface IPageService {
      * @param description {string} Page description.
      * @param keywords {string} Page keywords.
      */
-    createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<void>;
+    createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<PageContract>;
 
     /**
      * Updates a page.

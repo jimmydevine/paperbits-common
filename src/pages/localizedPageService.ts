@@ -113,7 +113,7 @@ export class LocalizedPageService implements IPageService {
         await Promise.all([deleteContentPromise, deletePagePromise]);
     }
 
-    public async createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<void> {
+    public async createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<PageContract> {
         const identifier = Utils.guid();
         const pageKey = `${pagesPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;
@@ -136,6 +136,8 @@ export class LocalizedPageService implements IPageService {
         const template = await this.blockService.getBlockContent(templateBlockKey);
 
         await this.objectStorage.addObject(contentKey, template);
+
+        return <any>page;
     }
 
     public async updatePage(page: PageContract, locale?: string): Promise<void> {

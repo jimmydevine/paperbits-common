@@ -61,12 +61,12 @@ export class PageService implements IPageService {
         await Promise.all([deleteContentPromise, deletePagePromise]);
     }
 
-    public async createPage(permalink: string, title: string, description: string, keywords: string): Promise<void> {
+    public async createPage(permalink: string, title: string, description: string, keywords: string): Promise<PageContract> {
         const identifier = Utils.guid();
         const pageKey = `${pagesPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;
 
-        const page: PageContract = {
+        const pageContract: PageContract = {
             key: pageKey,
             title: title,
             description: description,
@@ -75,11 +75,13 @@ export class PageService implements IPageService {
             contentKey: contentKey
         };
 
-        await this.objectStorage.addObject(pageKey, page);
+        await this.objectStorage.addObject(pageKey, pageContract);
 
         const template = await this.blockService.getBlockContent(templateBlockKey);
 
         await this.objectStorage.addObject(contentKey, template);
+
+        return pageContract;
     }
 
     public async updatePage(page: PageContract): Promise<void> {

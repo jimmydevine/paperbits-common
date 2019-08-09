@@ -153,7 +153,14 @@ export class LocalizedPageService implements IPageService {
             throw new Error(`Parameter "key" not specified.`);
         }
 
-        const page = await this.getPageByKey(key);
+        const page: any = await this.getPageByKey(key);
+
+        if (locale) {
+            const localizedPage = <LocalizedPageContract>page;
+            return await this.objectStorage.getObject(localizedPage.locales[locale].contentKey);
+            return;
+        }
+
         return await this.objectStorage.getObject(page.contentKey);
     }
 

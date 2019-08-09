@@ -15,7 +15,7 @@ export class LocaleService implements ILocaleService {
 
         const localeRuRu = new LocaleModel();
         localeRuRu.code = "ru-ru";
-        localeRuRu.displayName = "Russian (Russia)";
+        localeRuRu.displayName = "Русский (Россия)";
 
         return [localeEnUs, localeRuRu];
     }

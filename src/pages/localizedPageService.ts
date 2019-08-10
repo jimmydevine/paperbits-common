@@ -42,9 +42,11 @@ export class LocalizedPageService implements IPageService {
 
         const query = Query
             .from<PageContract>()
-            .where(permalinkProperty, Operator.equals, permalink);
+            .where(permalinkProperty, Operator.equals, permalink)
+            .select(`${Constants.localePrefix}/${locale}`);
 
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
+
         const pages = Object.values(result);
 
         if (pages.length === 0) {
@@ -83,21 +85,14 @@ export class LocalizedPageService implements IPageService {
 
         const query = Query
             .from<PageContract>()
-            // .where("title", Operator.contains, pattern)
-            // .orderBy("title");
-            .select(`${Constants.localePrefix}/${locale}`);
+        // .where("title", Operator.contains, pattern)
+        // .orderBy("title");
+        // .select(`${Constants.localePrefix}/${locale}`);
 
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
         const pages = Object.values(result);
 
-        if (locale) {
-            return pages.map(x =>
-                x.locales
-                    ? this.localizedPageContractToPageContract(locale, x)
-                    : x);
-        }
-
-        return pages;
+        return pages.map(x => this.localizedPageContractToPageContract(locale, x));
     }
 
     public async deletePage(page: PageContract | LocalizedPageContract, locale?: string): Promise<void> {
@@ -168,7 +163,7 @@ export class LocalizedPageService implements IPageService {
             throw new Error(`Parameter "key" not specified.`);
         }
 
-        // locale = await this.localeService.getCurrentLocale();
+        locale = await this.localeService.getCurrentLocale();
 
         const page: any = await this.getPageByKey(key, locale);
 

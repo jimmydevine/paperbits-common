@@ -18,10 +18,10 @@ export class LocalizedPageService implements IPageService {
         private readonly localeService: ILocaleService
     ) { }
 
-    private localizedPageContractToPageContract(localeCode: string, localizedPageContract: LocalizedPageContract): PageContract {
-        const pageMetadata = localizedPageContract[Constants.localePrefix][localeCode];
+    private localizedPageContractToPageContract(localeCode: string, defaultLocale: string, localizedPageContract: LocalizedPageContract): PageContract {
+        const pageMetadata = localizedPageContract[Constants.localePrefix][localeCode] || localizedPageContract[Constants.localePrefix][defaultLocale];
 
-        const pageContract: PageContract = {
+        const pageContract: any = {
             key: localizedPageContract.key,
             ...pageMetadata
         };
@@ -35,6 +35,7 @@ export class LocalizedPageService implements IPageService {
         }
 
         locale = await this.localeService.getCurrentLocale();
+        const defaultLocale = await this.localeService.getDefaultLocale();
 
         const permalinkProperty = locale
             ? `${Constants.localePrefix}/${locale}/permalink`
@@ -56,7 +57,7 @@ export class LocalizedPageService implements IPageService {
         const firstPage = pages[0];
 
         if (locale) {
-            return this.localizedPageContractToPageContract(locale, firstPage);
+            return this.localizedPageContractToPageContract(locale, defaultLocale, firstPage);
         }
         else {
             return firstPage;
@@ -69,11 +70,12 @@ export class LocalizedPageService implements IPageService {
         }
 
         locale = await this.localeService.getCurrentLocale();
+        const defaultLocale = await this.localeService.getDefaultLocale();
 
         const result = await this.objectStorage.getObject<any>(key);
 
         if (locale) {
-            return this.localizedPageContractToPageContract(locale, result);
+            return this.localizedPageContractToPageContract(locale, defaultLocale, result);
         }
         else {
             return result;
@@ -82,6 +84,7 @@ export class LocalizedPageService implements IPageService {
 
     public async search(pattern: string, locale?: string): Promise<PageContract[]> {
         locale = await this.localeService.getCurrentLocale();
+        const defaultLocale = await this.localeService.getDefaultLocale();
 
         const query = Query
             .from<PageContract>()
@@ -92,7 +95,7 @@ export class LocalizedPageService implements IPageService {
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
         const pages = Object.values(result);
 
-        return pages.map(x => this.localizedPageContractToPageContract(locale, x));
+        return pages.map(x => this.localizedPageContractToPageContract(locale, defaultLocale, x));
     }
 
     public async deletePage(page: PageContract | LocalizedPageContract, locale?: string): Promise<void> {

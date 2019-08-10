@@ -15,5 +15,7 @@ export interface ILocaleService {
 
     setCurrentLocale(localeCode: string): Promise<void>;
 
+    getDefaultLocale(): Promise<string>;
+
     isLocalizationEnabled(): Promise<boolean>;
 }

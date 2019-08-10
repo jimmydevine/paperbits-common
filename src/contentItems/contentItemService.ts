@@ -1,6 +1,6 @@
-﻿import { ContentItemContract, IContentItemService } from "../contentItems";
+﻿import * as Constants from "../constants";
+import { ContentItemContract, IContentItemService } from "../contentItems";
 import { IObjectStorage } from "../persistence";
-import * as Constants from "../constants";
 import { ILocaleService } from "../localization";
 
 export class ContentItemService implements IContentItemService {
@@ -9,8 +9,8 @@ export class ContentItemService implements IContentItemService {
         private readonly localeService: ILocaleService
     ) { }
 
-    private localizedPageContractToPageContract(localeCode: string, localizedPageContract: any): any {
-        const pageMetadata = localizedPageContract[Constants.localePrefix][localeCode];
+    private localizedPageContractToPageContract(localeCode: string, defaultLocale: string, localizedPageContract: any): any {
+        const pageMetadata = localizedPageContract[Constants.localePrefix][localeCode] || localizedPageContract[Constants.localePrefix][defaultLocale];
 
         const pageContract: any = {
             key: localizedPageContract.key,
@@ -26,15 +26,16 @@ export class ContentItemService implements IContentItemService {
         }
 
         if (!key.startsWith("pages")) {
-           return  await this.objectStorage.getObject<any>(key);
+            return await this.objectStorage.getObject<any>(key);
         }
 
         const locale = await this.localeService.getCurrentLocale();
+        const defaultLocale = await this.localeService.getDefaultLocale();
 
         const result = await this.objectStorage.getObject<any>(key);
 
         if (locale) {
-            return this.localizedPageContractToPageContract(locale, result);
+            return this.localizedPageContractToPageContract(locale, defaultLocale, result);
         }
         else {
             return result;

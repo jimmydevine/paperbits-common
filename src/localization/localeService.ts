@@ -28,6 +28,10 @@ export class LocaleService implements ILocaleService {
         // TODO
     }
 
+    public async getDefaultLocale(): Promise<string> {
+        return "en-us";
+    }
+
     public async getCurrentLocale(): Promise<string> {
         return this.currentLocale;
     }

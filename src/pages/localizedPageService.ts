@@ -34,8 +34,10 @@ export class LocalizedPageService implements IPageService {
             throw new Error(`Parameter "permalink" not specified.`);
         }
 
-        locale = await this.localeService.getCurrentLocale();
+        locale = locale || await this.localeService.getCurrentLocale();
         const defaultLocale = await this.localeService.getDefaultLocale();
+
+        /* Attempting to get selected locale */
 
         const permalinkProperty = locale
             ? `${Constants.localePrefix}/${locale}/permalink`
@@ -46,12 +48,31 @@ export class LocalizedPageService implements IPageService {
             .where(permalinkProperty, Operator.equals, permalink)
             .select(`${Constants.localePrefix}/${locale}`);
 
-        const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
+        let result = await this.objectStorage.searchObjects<any>(pagesPath, query);
 
         const pages = Object.values(result);
 
         if (pages.length === 0) {
-            return null;
+            /* Attempting to get default locale */
+            
+            locale = defaultLocale;
+
+            const permalinkProperty = locale
+                ? `${Constants.localePrefix}/${defaultLocale}/permalink`
+                : `permalink`;
+
+            const query = Query
+                .from<PageContract>()
+                .where(permalinkProperty, Operator.equals, permalink)
+                .select(`${Constants.localePrefix}/${defaultLocale}`);
+
+            result = await this.objectStorage.searchObjects<any>(pagesPath, query);
+
+            const pages = Object.values(result);
+
+            if (pages.length === 0) {
+                return null;
+            }
         }
 
         const firstPage = pages[0];

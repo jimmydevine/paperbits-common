@@ -82,10 +82,10 @@ export class LocalizedPageService implements IPageService {
         locale = await this.localeService.getCurrentLocale();
 
         const query = Query
-            .from<PageContract>();
-        // .where("title", Operator.contains, pattern)
-        // .orderBy("title");
-        // .select(`${Constants.localePrefix}/${locale}`);
+            .from<PageContract>()
+            // .where("title", Operator.contains, pattern)
+            // .orderBy("title");
+            .select(`${Constants.localePrefix}/${locale}`);
 
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
         const pages = Object.values(result);

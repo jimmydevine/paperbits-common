@@ -12,13 +12,14 @@ export interface ComponentConfig {
     injectable?: string;
     postprocess?: (element: Node, viewModel: any) => void;
     encapsulation?: Encapsulation; 
+    target?: any;
 }
 
 export function Component(config: ComponentConfig): ClassDecorator {
     return function (target: any) {
         ko.components.register(config.selector, {
             template: config.template,
-            viewModel: { injectable: config.injectable || target.name },
+            viewModel: { injectable: config.injectable || target.name, target: target },
             postprocess: config.postprocess,
             synchrounous: true,
             encapsulation: config.encapsulation

@@ -46,6 +46,8 @@ export class InversifyInjector implements IInjector {
 
         try {
             decorate(injectable(), component);
+
+            Reflect.defineMetadata("paperbits-injectable", { name: name }, component);
         }
         catch (error) {
             console.warn(`Unable to decorate component "${name}". ${error}`);

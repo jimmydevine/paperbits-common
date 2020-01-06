@@ -10,13 +10,14 @@ export function RuntimeComponent(config: any): (target: Function) => void {
             }
 
             public connectedCallback(): void {
-                this.component = new Vue({ el: this });
+                const hostElement = document.createElement("vue-host");
+                this.appendChild(hostElement);
+                const construct = Vue.component(config.selector);
+                this.component = new construct().$mount(hostElement);
             }
 
             public disconnectedCallback(): void {
-                if (this.component) {
-                    this.component.$destroy();
-                }
+                this.component.$destroy();
             }
         }
 

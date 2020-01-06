@@ -2,36 +2,33 @@ import * as ko from "knockout";
 
 export function RuntimeComponent(config: any): (target: Function) => void {
     return (target) => {
-
-        let onDispose: () => void;
+        
 
         class RuntimeComponentProxy extends HTMLElement {
+            private onDispose: () => void;
+
             constructor() {
                 super();
-                
-                const element = <HTMLElement>this;
-
-                setTimeout(() => {
-                    ko.applyBindingsToNode(element, {
-                        component: {
-                            name: config.selector,
-                            viewModel: target,
-                            params: element.getAttribute("params"),
-                            oncreate: (viewModelInstance) => {
-                                onDispose = viewModelInstance.dispose;
-                            }
-                        }
-                    }, null);
-                }, 10);
             }
 
             public connectedCallback(): void { 
-                // Not implemented
+                const element = <HTMLElement>this;
+
+                ko.applyBindingsToNode(element, {
+                    component: {
+                        name: config.selector,
+                        viewModel: target,
+                        params: element.getAttribute("params"),
+                        oncreate: (viewModelInstance) => {
+                            this.onDispose = viewModelInstance.dispose;
+                        }
+                    }
+                }, null);
             }
 
             public disconnectedCallback(): void {
-                if (onDispose) {
-                    onDispose();
+                if (this.onDispose) {
+                    this.onDispose();
                 }
             }
         }

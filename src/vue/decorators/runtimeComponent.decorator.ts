@@ -1,25 +1,21 @@
-// import Vue from "vue";
-declare var Vue;
+import Vue from "vue";
 
 export function RuntimeComponent(config: any): (target: Function) => void {
     return (target) => {
-        let onDispose: () => void;
-
         class RuntimeComponentProxy extends HTMLElement {
+            private component: Vue;
+
             constructor() {
                 super();
-
-                const element = <HTMLElement>this;
-                const component = new Vue({ el: element });
             }
 
             public connectedCallback(): void {
-                // Not implemented
+                this.component = new Vue({ el: this });
             }
 
             public disconnectedCallback(): void {
-                if (onDispose) {
-                    onDispose();
+                if (this.component) {
+                    this.component.$destroy();
                 }
             }
         }

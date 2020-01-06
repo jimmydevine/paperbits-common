@@ -1,5 +1,7 @@
-import { Vue } from "./decorators";
 import { ComponentConfig } from "./ComponentConfig";
+// import Vue from "vue";
+
+declare var Vue;
 
 export function Component(config: ComponentConfig): ClassDecorator {
     return function (target) {

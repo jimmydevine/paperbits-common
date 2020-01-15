@@ -1,14 +1,14 @@
 import { ILayoutService } from "../layouts";
 import { Router } from "../routing";
-import { IViewManager } from "./../ui";
-import { IEventManager } from "../events";
+import { ViewManager } from "./../ui";
+import { EventManager } from "../events";
 
 export class Hinter {
     private noHints: boolean;
 
     constructor(
-        private readonly eventManager: IEventManager,
-        private readonly viewManager: IViewManager,
+        private readonly eventManager: EventManager,
+        private readonly viewManager: ViewManager,
         private readonly router: Router,
         private readonly layoutService: ILayoutService,
     ) {
@@ -41,7 +41,7 @@ export class Hinter {
             title: "Edit layout",
             iconClass: "paperbits-edit-72",
             action: async () => {
-                this.router.navigateTo(url, "", { routeKind: "layout" });
+                this.viewManager.setHost({ name: "layout-host", params: { layoutKey: layoutContract.key } });
             }
         }]);
 

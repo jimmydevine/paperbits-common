@@ -1,7 +1,9 @@
-﻿import { DragSource, DragTarget, DragSourceConfig, DragTargetConfig } from "../../ui/draggables";
-import { IEventManager } from "../../events";
-import { IViewManager, ViewManagerMode } from "../IViewManager";
+﻿import * as Utils from "../../utils";
+import { DragSource, DragTarget, DragSourceConfig, DragTargetConfig } from "../../ui/draggables";
+import { EventManager } from "../../events";
+import { ViewManager, ViewManagerMode } from "../viewManager";
 import { Box } from "../../editing/box";
+
 
 const startDraggingTime = 300;
 const frictionCoeff = 0.85;
@@ -18,20 +20,22 @@ export class DragManager {
     private velocityY: number;
     private startDraggingTimeout: number;
     private source: DragSource;
-    private acceptor: DragTarget;
+    private target: DragTarget;
     private acceptBefore: boolean;
     private initialOffsetX: number;
     private initialOffsetY: number;
     private bounds: Box;
 
-    public payload: any;
+    public sourceData: any;
+    public targetData: any;
+
     public dragged: HTMLElement;
     public isDragged: boolean;
     public draggedClientRect: ClientRect;
 
     constructor(
-        private readonly eventManager: IEventManager,
-        private readonly viewManager: IViewManager
+        private readonly eventManager: EventManager,
+        private readonly viewManager: ViewManager
     ) {
         this.startDragging = this.startDragging.bind(this);
         this.completeDragging = this.completeDragging.bind(this);
@@ -49,15 +53,21 @@ export class DragManager {
     }
 
     private onPointerMove(event: MouseEvent): void {
+        if (!this.isDragged) {
+            return;
+        }
+
+        if (event.which !== 1) {
+            this.cancelDragging();
+            return;
+        }
+
         this.previousX = this.positionX;
         this.previousY = this.positionY;
 
         this.pointerX = event.clientX;
         this.pointerY = event.clientY;
 
-        if (!this.isDragged) {
-            return;
-        }
 
         this.positionX = this.pointerX - this.initialOffsetX;
         this.positionY = this.pointerY - this.initialOffsetY;
@@ -83,8 +93,8 @@ export class DragManager {
             this.velocityY = this.positionY - this.previousY;
         }
 
-        if (this.acceptor && this.acceptor.element.classList.contains("accepting")) {
-            this.acceptor.element.classList.remove("accepting");
+        if (this.target && this.target.element.classList.contains("accepting")) {
+            this.target.element.classList.remove("accepting");
         }
 
         this.resetDraggedElementPosition();
@@ -101,7 +111,7 @@ export class DragManager {
         this.isDragged = true;
         this.dragged = source.element;
 
-        this.payload = source.configuration.payload;
+        this.sourceData = source.configuration.sourceData;
         this.source = source;
         this.initialOffsetX = this.source.initialOffsetX;
         this.initialOffsetY = this.source.initialOffsetY;
@@ -124,7 +134,7 @@ export class DragManager {
         }
 
         if (source.configuration.ondragstart) {
-            const replacement = source.configuration.ondragstart(source.configuration.payload, source.element);
+            const replacement = source.configuration.ondragstart(source.configuration.sourceData, source.element);
 
             if (replacement) {
                 this.dragged = replacement;
@@ -143,29 +153,36 @@ export class DragManager {
         this.viewManager.mode = ViewManagerMode.dragging;
     }
 
+    private cancelDragging(): void {
+        this.target = null;
+        this.completeDragging();
+    }
+
     private completeDragging(): void {
         this.isDragged = false;
 
-        if (this.acceptor) {
-            this.acceptor.element.classList.remove("accepting");
+        if (this.target) {
+            this.target.element.classList.remove("accepting");
 
-            if (this.acceptor.config.ondrop) {
-                this.acceptor.config.ondrop(this.payload);
+            const quadrant = Utils.pointerToClientQuadrant(this.pointerX, this.pointerY, this.target.element);
+
+            if (this.target.config.ondrop) {
+                this.target.config.ondrop(this.sourceData, this.target.config.targetData, quadrant);
             }
 
-            if (this.acceptor.config.ondropbefore && this.acceptBefore) {
-                this.acceptor.config.ondropbefore(this.source.configuration.payload, this.source.element);
+            if (this.target.config.ondropbefore && this.acceptBefore) {
+                this.target.config.ondropbefore(this.source.configuration.sourceData, this.source.element);
             }
 
-            if (this.acceptor.config.ondropafter && !this.acceptBefore) {
-                this.acceptor.config.ondropafter(this.source.configuration.payload, this.source.element);
+            if (this.target.config.ondropafter && !this.acceptBefore) {
+                this.target.config.ondropafter(this.source.configuration.sourceData, this.source.element);
             }
         }
 
         this.dragged.classList.remove("dragged");
 
         if (this.source.configuration.ondragend) {
-            this.source.configuration.ondragend(this.source.configuration.payload, this.source.element);
+            this.source.configuration.ondragend(this.source.configuration.sourceData, this.source.element);
             this.eventManager.dispatchEvent("virtualDragEnd");
         }
 
@@ -179,14 +196,9 @@ export class DragManager {
             this.inertia();
         }
 
-        // if (this.source.configuration.ondragend) {
-        //     this.source.configuration.ondragend(this.source.configuration.payload, this.source.element);
-        // }
-
-        this.payload = null;
-        // this.dragged = null;
+        this.sourceData = null;
         this.source = null;
-        this.acceptor = null;
+        this.target = null;
     }
 
     private onPointerUp(event: MouseEvent): void {
@@ -209,18 +221,19 @@ export class DragManager {
 
     public onPointerDown(source: DragSource): void {
         if (source.configuration.sticky) {
+            clearTimeout(this.startDraggingTimeout);
             this.startDraggingTimeout = <any>setTimeout(() => this.startDragging(source), startDraggingTime);
         }
         else {
             this.startDragging(source);
         }
-    };
+    }
 
     public setAcceptor(acceptor: DragTarget, before: boolean): void {
-        this.acceptor = acceptor;
+        this.target = acceptor;
 
-        if (!this.acceptor.element.classList.contains("accepting")) {
-            this.acceptor.element.classList.add("accepting");
+        if (!this.target.element.classList.contains("accepting")) {
+            this.target.element.classList.add("accepting");
         }
 
         this.acceptBefore = before;

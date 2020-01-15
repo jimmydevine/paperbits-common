@@ -1,4 +1,4 @@
-﻿import { IWidgetFactoryResult, IWidgetOrder } from "../editing";
+﻿import { IWidgetFactoryResult } from "../editing";
 
 /**
  * Structure exposing methods to create HTML element or a model for particular widget.
@@ -30,7 +30,7 @@ export interface IWidgetOrder {
     createWidget?(): IWidgetFactoryResult<any>;
 
     /**
-     * Widget model factory method.
+     * Widget model factory method. Invoked when widget gets added to the content.
      */
     createModel(): Promise<any>;
 

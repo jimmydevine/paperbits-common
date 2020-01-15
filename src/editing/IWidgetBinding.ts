@@ -2,7 +2,10 @@
  * Structure that binds widget view model to widget HTML element.
  */
 export interface IWidgetBinding<TModel> {
-    name?: string;
+    /**
+     * Name of a widget.
+     */
+    name: string;
 
     /**
      * Widget display name.

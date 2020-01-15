@@ -1,13 +1,17 @@
-import { IEventManager } from "../events";
-import { IViewManager } from "../ui";
+import { EventManager } from "../events";
+import { ViewManager } from "../ui";
 import { OfflineObjectStorage } from ".";
 
 
 export class SavingHandler {
-    constructor(eventManager: IEventManager, offlineObjectStorage: OfflineObjectStorage, viewManager: IViewManager) {
+    constructor(eventManager: EventManager, offlineObjectStorage: OfflineObjectStorage, viewManager: ViewManager) {
         eventManager.addEventListener("onSaveChanges", async () => {
-            const saveChangesPromise = offlineObjectStorage.saveChanges();
-            viewManager.notifyProgress(saveChangesPromise, "Changes saved", "All changes were pushed to server");
+            if (!offlineObjectStorage.hasUnsavedChanges()) {
+                return;
+            }
+
+            await offlineObjectStorage.saveChanges();
+            viewManager.notifySuccess("Changes saved", "All changes saved successfully.");
         });
     }
 }

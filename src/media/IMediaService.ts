@@ -11,7 +11,11 @@ export interface IMediaService {
      */
     getMediaByKey(key: string): Promise<MediaContract>;
 
-    getMediaByUrl(url: string): Promise<MediaContract>;
+    /**
+     * Return media file metadata by permalink.
+     * @param permalink {string} Permanent link of the media.
+     */
+    getMediaByPermalink(permalink: string): Promise<MediaContract>;
 
     search(pattern?: string, mimeType?: string): Promise<MediaContract[]>;
 
@@ -28,6 +32,14 @@ export interface IMediaService {
      * @param contentType Content type, i.e. "image/png".
      */
     createMedia(name: string, content: Uint8Array, contentType?: string): Promise<MediaContract>;
+
+    /**
+     * Creates new media files.
+     * @param name Name of media file, i.e. "logo.png"
+     * @param referenceUrl URL, i.e. "https://cdn.paperbits.io/images/logo.svg"
+     * @param contentType Content type, i.e. "image/png".
+     */
+    createMediaUrl(name: string, referenceUrl: string, mimeType?: string): Promise<MediaContract>;
 
     updateMedia(media: MediaContract): Promise<void>;
 

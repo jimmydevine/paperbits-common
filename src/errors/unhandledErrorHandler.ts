@@ -1,10 +1,10 @@
-import { IEventManager } from "../events";
-import { IViewManager } from "../ui";
+import { EventManager } from "../events";
+import { ViewManager } from "../ui";
 
 export class UnhandledErrorHandler {
     constructor(
-        private readonly eventManager: IEventManager,
-        private readonly viewManager: IViewManager
+        private readonly eventManager: EventManager,
+        private readonly viewManager: ViewManager
     ) {
         this.eventManager.addEventListener("onError", this.handlerError.bind(this));
     }

@@ -1,30 +1,30 @@
-﻿import { IEventManager } from "../events";
+﻿import { EventManager } from "../events";
 import { Router, RouterEvents, Route, RouteGuard } from ".";
 
 
 export class DefaultRouter implements Router {
+    private notificationTimeout: any;
     public currentRoute: Route;
     public notifyListeners: boolean;
 
     constructor(
         private readonly routeGuards: RouteGuard[],
-        private readonly eventManager: IEventManager
+        private readonly eventManager: EventManager
     ) {
-        // setting up...
         this.notifyListeners = true;
         this.currentRoute = this.getRouteFromLocation();
     }
 
     public getRouteFromLocation(): Route {
         const path = location.pathname;
-        const hash = location.hash.startsWith("#") ? location.hash.slice(1) : location.hash;
-        const url = location.pathname + hash;
+        const hash = location.hash.startsWith("#") ? location.hash.slice(1) : null;
+        const url = path + (hash ? `#${hash}` : "");
 
         const route: Route = {
             url: url,
             path: path,
-            metadata: {},
             hash: hash,
+            metadata: {},
             previous: null
         };
 
@@ -39,6 +39,14 @@ export class DefaultRouter implements Router {
         this.eventManager.removeEventListener(RouterEvents.onRouteChange, eventHandler);
     }
 
+    public addHistoryUpdateListener(eventHandler: (args?: any) => void): void {
+        this.eventManager.addEventListener(RouterEvents.onHistoryUpdate, eventHandler);
+    }
+
+    public removeHistoryUpdateListener(eventHandler: (args?: any) => void): void {
+        this.eventManager.removeEventListener(RouterEvents.onHistoryUpdate, eventHandler);
+    }
+
     /**
      * Navigates to specified URL.
      * @param url Absolute or relative path, i.e. https://paperbits.io or /about
@@ -46,8 +54,46 @@ export class DefaultRouter implements Router {
      * @param metadata Associated metadata
      */
     public async navigateTo(url: string, title: string = null, metadata: Object = {}): Promise<void> {
-        if (!url) {
+        const route = this.getRoute(url, title, metadata);
+
+        if (!route) {
             return;
+        }
+
+        const canActivate = await this.canActivate(route);
+
+        if (canActivate) {
+            this.currentRoute = route;
+
+            if (this.notifyListeners) {
+                this.scheduleNotification(route);
+            }
+        }
+    }
+
+    private scheduleNotification(route: Route): void {
+        clearTimeout(this.notificationTimeout);
+
+        this.notificationTimeout = setTimeout(() => {
+            this.eventManager.dispatchEvent(RouterEvents.onRouteChange, route);
+        }, 100);
+    }
+
+    public updateHistory(url: string, title: string): void {
+        const route = this.getRoute(url, title);
+
+        if (!route) {
+            return;
+        }
+
+        if (this.notifyListeners) {
+            this.eventManager.dispatchEvent(RouterEvents.onHistoryUpdate, route);
+        }
+    }
+
+    private getRoute(url: string, title: string = null, metadata: Object = {}): Route {
+        if (!url) {
+            return undefined;
         }
 
         const isFullUrl = url && (url.startsWith("http://") || url.startsWith("https://"));
@@ -73,15 +119,7 @@ export class DefaultRouter implements Router {
             previous: this.currentRoute
         };
 
-        const canActivate = await this.canActivate(route);
-
-        if (canActivate) {
-            this.currentRoute = route;
-
-            if (this.notifyListeners) {
-                this.eventManager.dispatchEvent(RouterEvents.onRouteChange, route);
-            }
-        }
+        return route;
     }
 
     protected async canActivate(route: Route): Promise<boolean> {

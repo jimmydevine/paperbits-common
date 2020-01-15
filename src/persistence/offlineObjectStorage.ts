@@ -3,13 +3,12 @@ import * as _ from "lodash";
 import { Bag } from "./../bag";
 import { IObjectStorage, Query, Operator, OrderDirection } from "../persistence";
 import { IObjectStorageMiddleware } from "./IObjectStorageMiddleware";
-import { IEventManager } from "../events";
+import { EventManager } from "../events";
 
 interface HistoryRecord {
     do: () => void;
     undo: () => void;
 }
-
 
 export class OfflineObjectStorage implements IObjectStorage {
     private underlyingStorage: IObjectStorage;      // for storage
@@ -22,7 +21,7 @@ export class OfflineObjectStorage implements IObjectStorage {
     public isOnline: boolean;
     public autosave: boolean;
 
-    constructor(private readonly eventManager?: IEventManager) {
+    constructor(private readonly eventManager?: EventManager) {
         this.stateObject = {};
         this.changesObject = {};
         this.underlyingStorage = null;
@@ -135,7 +134,7 @@ export class OfflineObjectStorage implements IObjectStorage {
 
     public async getObject<T>(path: string): Promise<T> {
         if (!path) {
-            throw new Error(`Path is undefined.`);
+            throw new Error(`Parameter "path" not specified.`);
         }
 
         const clonedChanges = <any>Objects.clone(this.changesObject);
@@ -261,6 +260,11 @@ export class OfflineObjectStorage implements IObjectStorage {
             return searchResultObject;
         }
 
+        return this.searchInResult<T>(searchObj, query);
+    }
+
+    private searchInResult<T>(searchObj: unknown, query?: Query<T>): Bag<T> {
+        const searchResultObject: Bag<T> = {};
         let collection = Object.values(searchObj);
 
         if (query) {
@@ -271,13 +275,36 @@ export class OfflineObjectStorage implements IObjectStorage {
                     for (const filter of query.filters) {
                         const property = x[filter.left];
 
+                        if (typeof filter.right === "boolean") {
+                            if (filter.operator !== Operator.equals) {
+                                console.warn("Boolean query operator can be only equals");
+                                meetsCriteria = false;
+                                return;
+                            }
+
+                            if (((property === undefined || property === false) && filter.right === true) ||
+                                ((filter.right === undefined || filter.right === false) && property === true)) {
+                                meetsCriteria = false;
+                            }
+                            continue;
+                        }
+
                         if (!property) {
                             meetsCriteria = false;
                             continue;
                         }
 
-                        const left = x[filter.left].toUpperCase();
-                        const right = filter.right.toUpperCase();
+                        let left = x[filter.left];
+                        let right = filter.right;
+
+                        if (typeof left === "string") {
+                            left = left.toUpperCase();
+                        }
+
+                        if (typeof right === "string") {
+                            right = right.toUpperCase();
+                        }
+
                         const operator = filter.operator;
 
                         switch (operator) {
@@ -374,8 +401,28 @@ export class OfflineObjectStorage implements IObjectStorage {
     }
 
     public async saveChanges(): Promise<void> {
+        const entities = Object.keys(this.changesObject);
+
+        if (entities.length === 0) {
+            return;
+        }
+
         await this.underlyingStorage.saveChanges(this.changesObject);
-        Object.keys(this.changesObject).forEach(key => delete this.changesObject[key]);
+        entities.forEach(key => delete this.changesObject[key]);
         this.eventManager.dispatchEvent("onDataChange");
+    }
+
+    public async loadData(): Promise<object> {
+        if (this.underlyingStorage.loadData) {
+            const loadedData = await this.underlyingStorage.loadData();
+            if (loadedData) {
+                await this.discardChanges();
+                this.eventManager.dispatchEvent("onDataPush");
+                this.eventManager.dispatchEvent("onDataChange");
+            }
+        } else {
+            console.warn("current ObjectStorage does not implement loadData");
+        }
+        return this.stateObject;
     }
 }

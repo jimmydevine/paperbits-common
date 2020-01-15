@@ -4,11 +4,12 @@ export interface IContextCommandSet {
     color?: string;
     element?: HTMLElement;
     hoverCommand?: IContextCommand;
-    selectionCommands?: IContextCommand[];
+    selectCommands?: IContextCommand[];
     deleteCommand?: IContextCommand;
 }
 
 export interface IContextCommand {
+    name?: string;
     callback?: () => void;
     component?: IComponent;
     tooltip?: string;

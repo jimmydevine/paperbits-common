@@ -1,15 +1,17 @@
 import * as ko from "knockout";
-import { OfflineObjectStorage } from ".";
-import { IToolButton } from "../ui";
-import { IEventManager } from "../events";
+import { OfflineObjectStorage } from "../persistence";
+import { ToolButton } from "../ui";
+import { EventManager } from "../events";
 
+export class UndoToolButton implements ToolButton {
+    public readonly iconClass: string = "paperbits-icon paperbits-undo-25";
+    public readonly title: string = "Undo";
+    public readonly disabled: ko.Observable<boolean>;
 
-export class UndoToolButton implements IToolButton {
-    public iconClass: string = "paperbits-icon paperbits-undo-25";
-    public title: string = "Undo";
-    public disabled: ko.Observable<boolean>;
-
-    constructor(private readonly eventManager: IEventManager, private readonly offlineObjectStorage: OfflineObjectStorage) {
+    constructor(
+        private readonly eventManager: EventManager, 
+        private readonly offlineObjectStorage: OfflineObjectStorage
+    ) {
         this.disabled = ko.observable(true);
         this.eventManager.addEventListener("onDataChange", this.onDataChange.bind(this));
     }

@@ -1,4 +1,4 @@
-import { IInjector, IInjectorModule } from "../injection";
+import { IInjectorModule } from "../injection";
 
 /**
  * A utility for building inversion of control containers.
@@ -53,7 +53,7 @@ export interface IInjector {
     bindCollection<T>(collectionName: string): void;
 
     /**
-     * Declares a collection of dependencies that may contain with circular references.
+     * Declares a collection of dependencies that may contain circular references.
      * @param collectionName {string} Name of the collection, e.g. myCollection.
      */
     bindCollectionLazily<T>(collectionName: string): void;

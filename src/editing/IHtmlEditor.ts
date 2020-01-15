@@ -15,6 +15,7 @@ export interface IHtmlEditor {
     toggleItalic(): void;
     toggleUnderlined(): void;
     toggleHighlighted(): void;
+    toggleCode(): void;
     toggleParagraph(): void;
     toggleH1(): void;
     toggleH2(): void;
@@ -31,7 +32,6 @@ export interface IHtmlEditor {
     alignCenter(viewport?: string): void;
     alignRight(viewport?: string): void;
     justify(viewport?: string): void;
-    setTypegraphy(font: string): void;
     setHyperlink(hyperlink: HyperlinkModel): void;
     setAnchor(hash: string, anchorKey: string): void;
     removeAnchor(): void;

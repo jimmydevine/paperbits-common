@@ -1,6 +1,6 @@
 ﻿import "reflect-metadata";
-import { IInjector, IInjectorModule } from "../injection";
-import { inject, injectable, Container, decorate, interfaces, multiInject, LazyServiceIdentifer, METADATA_KEY } from "inversify";
+import { IInjector, IInjectorModule, InjectableMetadataKey } from "../injection";
+import { inject, injectable, Container, decorate, interfaces, METADATA_KEY } from "inversify";
 
 export class InversifyInjector implements IInjector {
     private conatainer: Container;
@@ -46,6 +46,7 @@ export class InversifyInjector implements IInjector {
 
         try {
             decorate(injectable(), component);
+            Reflect.defineMetadata(InjectableMetadataKey, { name: name }, component);
         }
         catch (error) {
             console.warn(`Unable to decorate component "${name}". ${error}`);
@@ -81,7 +82,7 @@ export class InversifyInjector implements IInjector {
         this.bindInternal(name, singletone).inSingletonScope();
     }
 
-    public bindFactory<T>(name, factory: (ctx: IInjector) => T): void {
+    public bindFactory<T>(name: string, factory: (ctx: IInjector) => T): void {
         let injector = this;
 
         const construct: any = function () {
@@ -90,7 +91,7 @@ export class InversifyInjector implements IInjector {
         this.bindInternal(name, construct);
     }
 
-    public bindSingletonFactory<T>(name, factory: (ctx: IInjector) => T): void {
+    public bindSingletonFactory<T>(name: string, factory: (ctx: IInjector) => T): void {
         const injector = this;
 
         const construct: any = function () {
@@ -120,7 +121,6 @@ export class InversifyInjector implements IInjector {
     public bindModule(module: IInjectorModule): void {
         module.register(this);
     }
-
 
     /**
      * Declares a collection of dependencies.

@@ -50,6 +50,6 @@ export class HtmlPagePublisher {
             await plugin.apply(document, page);
         }
 
-        return document.documentElement.outerHTML;
+        return "<!DOCTYPE html>" + document.documentElement.outerHTML;
     }
 }

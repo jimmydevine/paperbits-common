@@ -12,4 +12,5 @@ export interface HtmlPage {
     structuredData?: PageStructuredData;
     faviconPermalink?: string;
     content: Contract;
+    template: string;
 }

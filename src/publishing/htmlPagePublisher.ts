@@ -1,4 +1,3 @@
-import template from "./page.html";
 import { HtmlDocumentProvider } from "./htmlDocumentProvider";
 import { HtmlPage } from "./htmlPage";
 
@@ -28,7 +27,7 @@ export class HtmlPagePublisher {
     }
 
     public async renderHtml(page: HtmlPage): Promise<string> {
-        const document = this.htmlDocumentProvider.createDocument(template);
+        const document = this.htmlDocumentProvider.createDocument(page.template);
         document.title = page.title;
 
         if (page.faviconPermalink) {

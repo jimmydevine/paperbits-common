@@ -1,25 +1,6 @@
 import * as Utils from "../utils";
-import { BreakpointValues } from "./breakpoints";
 import { StyleRule } from "./styleRule";
 import { StyleMediaQuery } from "./styleMediaQuery";
-
-export class FontFace {
-    public fontFamily: string;
-    public src: string;
-    public fontStyle: string;
-    public fontWeight: number | string;
-
-    public toJssString(): string {
-        const jssString = `{
-            "src": "url(${this.src})",
-            "fontFamily": "${this.fontFamily}",
-            "fontStyle": "${this.fontStyle}",
-            "fontWeight": "${this.fontWeight}"
-        }`;
-
-        return jssString;
-    }
-}
 
 export class Style {
     public readonly selector: string;
@@ -61,41 +42,3 @@ export class Style {
     }
 }
 
-export class StyleSheet {
-    public styles: Style[];
-    public mediaQueries: StyleMediaQuery[];
-    public fontFaces: FontFace[];
-
-    constructor() {
-        this.styles = [];
-        this.mediaQueries = [];
-        this.fontFaces = [];
-    }
-
-    private flattenMediaQueries(styles: Style[]): StyleMediaQuery[] {
-        const nestedMediaQueries = styles.map(x => x.nestedMediaQueries);
-        const flattenNestedMediaQueries = nestedMediaQueries.reduce((acc, next) => acc.concat(next), []);
-        const groupedMediaQueries = [];
-
-        for (const breakpointMinWidth of Object.values(BreakpointValues)) {
-            const mediaQuery = new StyleMediaQuery(breakpointMinWidth);
-            flattenNestedMediaQueries
-                .filter(x => x.minWidth === breakpointMinWidth)
-                .forEach(x => mediaQuery.styles.push(...x.styles));
-
-            groupedMediaQueries.push(mediaQuery);
-        }
-
-        return groupedMediaQueries;
-    }
-
-    public toJssString(): string {
-        const fontFacesJssString = `"@font-face":[${this.fontFaces.map(x => x.toJssString()).join(",")}]`;
-        const stylesJssString = this.styles.map(style => style.toJssString()).filter(x => !!x).join(",");
-        const mediaQueries = this.flattenMediaQueries(this.styles);
-        const mediaQueriesJssString = mediaQueries.map(x => x.toJssString()).filter(x => !!x).join(",");
-        const result = [fontFacesJssString, stylesJssString, mediaQueriesJssString].filter(x => !!x).join(",");
-
-        return `{${result}}`;
-    }
-}

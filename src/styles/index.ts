@@ -8,3 +8,4 @@ export * from "./styleHandler";
 export * from "./styleable";
 export * from "./styleContract";
 export * from "./stylePluginConfig";
+export * from "./styleRule";

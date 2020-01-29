@@ -1,34 +1,7 @@
 import * as Utils from "../utils";
 import { BreakpointValues } from "./breakpoints";
-
-export class StyleRule {
-    public name: string;
-    public value: any;
-
-    constructor(name: string, value: any) {
-        this.name = name;
-        this.value = value;
-    }
-
-    public toJssString(): string {
-        return `"${this.name}":"${this.value}"`;
-    }
-}
-
-export class StyleMediaQuery {
-    public minWidth: number;
-    public styles: Style[];
-
-    constructor(minWidth: number) {
-        this.minWidth = minWidth;
-        this.styles = [];
-    }
-
-    public toJssString(): string {
-        const styles = this.styles.map(style => style.toJssString()).join();
-        return `"@media(min-width:${this.minWidth}px)":{${styles}}`;
-    }
-}
+import { StyleRule } from "./styleRule";
+import { StyleMediaQuery } from "./styleMediaQuery";
 
 export class FontFace {
     public fontFamily: string;

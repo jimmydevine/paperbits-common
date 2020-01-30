@@ -11,6 +11,12 @@ export interface ViewModelBinder<TModel, TViewModel> {
     canHandleModel?(model: TModel): boolean;
 
     /**
+     * Returns true if this view model binder can handle specified view model.
+     * @param viewModel 
+     */
+    canHandleViewModel?(viewModel: TViewModel): boolean;
+
+    /**
      * Creates view model out of model.
      * @param model TModel This is data created by digesting config from contract.
      * @param existingViewModel If view model already exists, the binder will update it.

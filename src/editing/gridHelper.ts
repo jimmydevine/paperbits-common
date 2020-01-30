@@ -127,13 +127,7 @@ export class GridHelper {
     }
 
     public static getModel(element: HTMLElement): any {
-        const widgetModel = GridHelper.getWidgetBinding(element);
-
-        if (widgetModel && widgetModel["model"]) {
-            return widgetModel["model"];
-        }
-        else {
-            return null;
-        }
+        const widgetBinding = GridHelper.getWidgetBinding(element);
+        return widgetBinding?.model;
     }
 }

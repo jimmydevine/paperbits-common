@@ -13,20 +13,18 @@ export interface IWidgetBinding<TModel> {
     displayName: string;
 
     /**
-     * Callback method invoked when HTML element is created.
-     */
-    oncreate?: (viewModel: any) => void;
-
-    /**
      * Widget model.
      */
-    model?: TModel;
+    model: TModel;
 
     /**
      * Registration name (tag name) of editor component.
      */
     editor?: string;
 
+    /**
+     * Editor resize options.
+     */
     editorResize?: string;
 
     hideCloseButton?: boolean;
@@ -36,6 +34,9 @@ export interface IWidgetBinding<TModel> {
      */
     applyChanges?: (changes?: TModel) => void;
 
+    /**
+     * Indicates to grid editor whether this widget should be ignored.
+     */
     readonly: boolean;
 
     /**

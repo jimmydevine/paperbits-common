@@ -119,6 +119,7 @@ export class GridHelper {
         const viewModels = this.GetSelfAndParentViewModels(element);
 
         if (viewModels.length > 0) {
+            // TODO: Resolve binding by view model.
             return viewModels[0]["widgetBinding"];
         }
         else {

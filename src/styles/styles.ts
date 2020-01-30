@@ -3,8 +3,9 @@ import { StyleRule } from "./styleRule";
 import { StyleMediaQuery } from "./styleMediaQuery";
 
 export class Style {
+    private readonly rules: StyleRule[];
+
     public readonly selector: string;
-    public readonly rules: StyleRule[];
     public readonly nestedStyles: Style[];
     public readonly modifierStyles: Style[];
     public readonly pseudoStyles: Style[];
@@ -24,8 +25,16 @@ export class Style {
         this.nestedMediaQueries = [];
     }
 
+    public addRule(rule: StyleRule): void {
+        this.rules.push(rule);
+    }
+
+    public addRules(rules: StyleRule[]): void {
+        this.rules.push(...rules);
+    }
+
     public getRulesJssString(): string {
-        const rules = this.rules.map(rule => rule.toJssString()).filter(x => !!x).join(",");
+        const rules = this.rules.filter(x => !!x.value).map(rule => rule.toJssString()).filter(x => !!x).join(",");
         const modifierStyles = this.modifierStyles.map(style => `"&.${style.selector}": ${style.getRulesJssString()}`).filter(x => !!x).join(",");
         const pseudoStyles = this.pseudoStyles.map(style => `"&:${style.selector}": ${style.getRulesJssString()}`).filter(x => !!x).join(",");
         const nestedStyles = this.nestedStyles.map(style => `"& .${style.selector}": ${style.getRulesJssString()}`).filter(x => !!x).join(",");

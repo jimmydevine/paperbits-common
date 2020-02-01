@@ -1,6 +1,6 @@
 import { LocalStyles, StatesContract, VariationContract } from "./styleContract";
 import { StyleModel } from "./styleModel";
-import { Style } from "./styles";
+import { Style, StyleSheet } from "./";
 
 
 /**
@@ -52,7 +52,12 @@ export interface StyleCompiler {
     getStateStyle(states: StatesContract, stateName: string): Promise<Style>;
 
     /**
-     * Return compiled theme styles.
+     * Returns theme style sheet;
+     */
+    getStyleSheet(): Promise<StyleSheet>;
+
+    /**
+     * Returns compiled theme style sheet.
      */
     compileCss(): Promise<string>;
 

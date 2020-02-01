@@ -5,12 +5,16 @@ import { FontFace } from "./FontFace";
 
 
 export class StyleSheet {
-    public styles: Style[];
-    public mediaQueries: StyleMediaQuery[];
-    public fontFaces: FontFace[];
+    public readonly key: string;
+    public readonly styles: Style[];
+    public readonly globalStyles: Style[];
+    public readonly mediaQueries: StyleMediaQuery[];
+    public readonly fontFaces: FontFace[];
 
-    constructor() {
+    constructor(key?: string) {
+        this.key = key;
         this.styles = [];
+        this.globalStyles = [];
         this.mediaQueries = [];
         this.fontFaces = [];
     }

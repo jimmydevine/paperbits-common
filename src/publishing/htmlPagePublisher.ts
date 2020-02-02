@@ -1,9 +1,10 @@
 import template from "./page.html";
 import { HtmlDocumentProvider } from "./htmlDocumentProvider";
 import { HtmlPage } from "./htmlPage";
+import { Bag } from "../bag";
 
 export interface HtmlPagePublisherPlugin {
-    apply(document: Document, page?: HtmlPage): void;
+    apply(document: Document, page?: HtmlPage, bindingContext?: Bag<any>): void;
 }
 
 export class HtmlPagePublisher {
@@ -60,8 +61,17 @@ export class HtmlPagePublisher {
             this.appendStyleLink(document, reference);
         });
 
+        const bindingContext = { 
+            navigationPath: page.permalink,
+            template: {
+                page: {
+                    value: page.content,
+                }
+            }
+         };
+
         for (const plugin of this.htmlPagePublisherPlugins) {
-            await plugin.apply(document, page);
+            await plugin.apply(document, page, bindingContext);
         }
 
         return document.documentElement.outerHTML;

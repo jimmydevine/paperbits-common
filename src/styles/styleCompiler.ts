@@ -1,6 +1,7 @@
 import { LocalStyles, StatesContract, VariationContract } from "./styleContract";
 import { StyleModel } from "./styleModel";
 import { Style, StyleSheet } from "./";
+import { Bag } from "..";
 
 
 /**
@@ -29,7 +30,7 @@ export interface StyleCompiler {
      * Converts style contract into style model.
      * @param contract {VariationContract} Style contract.
      */
-    getStyleModelAsync(contract: LocalStyles): Promise<StyleModel>;
+    getStyleModelAsync(contract: LocalStyles, bindgingContent?: Bag<any>): Promise<StyleModel>;
 
     /**
      * Converts variation style contract into style.

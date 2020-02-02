@@ -12,7 +12,7 @@ export interface HtmlPage {
     openGraph?: OpenGraph;
     structuredData?: PageStructuredData;
     faviconPermalink?: string;
-    styleReferences: string[];
+    styleReferences?: string[];
     content: Contract;
-    bindingContext: Bag<any>;
+    bindingContext?: Bag<any>;
 }

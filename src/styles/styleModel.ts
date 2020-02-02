@@ -1,5 +1,4 @@
-import { StyleSheet } from "./";
-import { Bag } from "..";
+import { StyleSheet, StyleManager } from "./";
 
 /**
  * Style definition.
@@ -9,5 +8,5 @@ export interface StyleModel {
     classNames: string;
     css?: string;
     styleSheet: StyleSheet;
-    bindingContext?: Bag<any>;
+    styleManager?: StyleManager;
 }

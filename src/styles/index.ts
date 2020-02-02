@@ -12,3 +12,4 @@ export * from "./stylePluginConfig";
 export * from "./styleRule";
 export * from "./styles";
 export * from "./styleSheet";
+export * from "./styleManager";

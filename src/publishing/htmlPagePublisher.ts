@@ -20,6 +20,15 @@ export class HtmlPagePublisher {
         document.head.appendChild(element);
     }
 
+    private appendStyleLink(document: Document, styleSheetUrl: string): void {
+        const element: HTMLStyleElement = document.createElement("link");
+        element.setAttribute("href", styleSheetUrl);
+        element.setAttribute("rel", "stylesheet");
+        element.setAttribute("type", "text/css");
+
+        document.head.appendChild(element);
+    }
+
     private appendFaviconLink(permalink: string): void {
         const faviconLinkElement = document.createElement("link");
         faviconLinkElement.setAttribute("rel", "shortcut icon");
@@ -46,6 +55,10 @@ export class HtmlPagePublisher {
         if (page.author) {
             this.appendMetaTag(document, "author", page.author);
         }
+
+        page.styleReferences.forEach(reference => {
+            this.appendStyleLink(document, reference);
+        });
 
         for (const plugin of this.htmlPagePublisherPlugins) {
             await plugin.apply(document, page);

@@ -11,5 +11,6 @@ export interface HtmlPage {
     openGraph?: OpenGraph;
     structuredData?: PageStructuredData;
     faviconPermalink?: string;
+    styleReferences: string[];
     content: Contract;
 }

@@ -1,5 +1,6 @@
 import { HtmlDocumentProvider } from "./htmlDocumentProvider";
 import { HtmlPage } from "./htmlPage";
+import { Bag } from "../bag";
 
 export interface HtmlPagePublisherPlugin {
     apply(document: Document, page?: HtmlPage): void;
@@ -15,6 +16,15 @@ export class HtmlPagePublisher {
         const element: HTMLMetaElement = document.createElement("meta");
         element.setAttribute("name", name);
         element.setAttribute("content", content);
+
+        document.head.appendChild(element);
+    }
+
+    private appendStyleLink(document: Document, styleSheetUrl: string): void {
+        const element: HTMLStyleElement = document.createElement("link");
+        element.setAttribute("href", styleSheetUrl);
+        element.setAttribute("rel", "stylesheet");
+        element.setAttribute("type", "text/css");
 
         document.head.appendChild(element);
     }
@@ -45,6 +55,10 @@ export class HtmlPagePublisher {
         if (page.author) {
             this.appendMetaTag(document, "author", page.author);
         }
+
+        page.styleReferences.forEach(reference => {
+            this.appendStyleLink(document, reference);
+        });
 
         for (const plugin of this.htmlPagePublisherPlugins) {
             await plugin.apply(document, page);

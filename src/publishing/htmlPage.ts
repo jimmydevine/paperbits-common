@@ -1,6 +1,7 @@
 import { OpenGraph } from "./openGraph";
 import { PageStructuredData } from "./structuredData";
 import { Contract } from "../contract";
+import { Bag } from "..";
 
 export interface HtmlPage {
     title: string;
@@ -11,6 +12,8 @@ export interface HtmlPage {
     openGraph?: OpenGraph;
     structuredData?: PageStructuredData;
     faviconPermalink?: string;
+    styleReferences?: string[];
     content: Contract;
     template: string;
+    bindingContext?: Bag<any>;
 }

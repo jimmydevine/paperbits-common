@@ -1,6 +1,6 @@
 import { HtmlDocumentProvider } from "./htmlDocumentProvider";
 import { HtmlPage } from "./htmlPage";
-import { Bag } from "../bag";
+
 
 export interface HtmlPagePublisherPlugin {
     apply(document: Document, page?: HtmlPage): void;
@@ -36,7 +36,7 @@ export class HtmlPagePublisher {
         document.head.insertAdjacentElement("afterbegin", faviconLinkElement);
     }
 
-    public async renderHtml(page: HtmlPage): Promise<string> {
+    public async renderHtml(page: HtmlPage, additionalPlugins?: HtmlPagePublisherPlugin[]): Promise<string> {
         const document = this.htmlDocumentProvider.createDocument(page.template);
         document.title = page.title;
 
@@ -62,6 +62,12 @@ export class HtmlPagePublisher {
 
         for (const plugin of this.htmlPagePublisherPlugins) {
             await plugin.apply(document, page);
+        }
+
+        if (additionalPlugins) {
+            for (const plugin of additionalPlugins) {
+                await plugin.apply(document, page);
+            }
         }
 
         return "<!DOCTYPE html>" + document.documentElement.outerHTML;

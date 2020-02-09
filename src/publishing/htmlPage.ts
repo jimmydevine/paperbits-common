@@ -9,6 +9,7 @@ export interface HtmlPage {
     description?: string;
     author?: string;
     permalink: string;
+    url?: string;
     openGraph?: OpenGraph;
     structuredData?: PageStructuredData;
     faviconPermalink?: string;

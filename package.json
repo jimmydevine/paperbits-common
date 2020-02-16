@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "deepmerge": "^4.2.2",
+        "dexie": "^2.0.4",
         "immutable": "^3.8.2",
         "inversify": "^5.0.1",
         "knockout": "^3.5.1",

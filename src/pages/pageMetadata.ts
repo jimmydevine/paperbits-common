@@ -1,3 +1,5 @@
+import { SocialShareData } from "./socialShareData";
+
 /**
  * Page metadata.
  */
@@ -10,22 +12,12 @@ export interface PageMetadata {
     /**
      * Page description. This property is included in SEO attributes.
      */
-    description: string;
+    description?: string;
 
     /**
      * Page keywords. This property is included in SEO attributes.
      */
-    keywords: string;
-
-    /**
-     * Facebook Open Graph: This is how you describe the kind of object you are sharing: website, article, blog.
-     */
-    ogType?: "website" | "article" | "blog";
-
-    /**
-     * Facebook Open Graph: This is how you ensure that a particular thumbnail will be shown when your page is shared.
-     */
-    ogImageSourceKey?: string;
+    keywords?: string;
 
     /**
      * Key of a document containing page content.
@@ -33,7 +25,18 @@ export interface PageMetadata {
     contentKey?: string;
 
     /**
-     * Permalink referencing this page, e.g. /about
-     */
+     * Permalink referencing this page.
+     */    
     permalink?: string;
+
+    /**
+     * JSON-LD (JavaScript Object Notation for Linked Data) for this page.
+     * Note: This is temporary solution until seo module is in-place.
+     */    
+    jsonLd?: string;
+
+    /**
+     * Text and image that display when this page is shared on social networks.
+     */
+    socialShareData?: SocialShareData;
 }

@@ -6,6 +6,7 @@ import { IBlockService } from "../blocks";
 import { Contract } from "../contract";
 import { ILocaleService } from "../localization";
 import { LocalizedPageContract } from "./localizedPageContract";
+import { PageMetadata } from "./pageMetadata";
 
 const pagesPath = "pages";
 const documentsPath = "files";
@@ -45,16 +46,15 @@ export class LocalizedPageService implements IPageService {
 
         const query = Query
             .from<PageContract>()
-            .where(permalinkProperty, Operator.equals, permalink)
-            .select(`${Constants.localePrefix}/${locale}`);
+            .where(permalinkProperty, Operator.equals, permalink);
 
         let result = await this.objectStorage.searchObjects<any>(pagesPath, query);
 
-        const pages = Object.values(result);
+        const pages: any[] = Object.values(result);
 
         if (pages.length === 0) {
             /* Attempting to get default locale */
-            
+
             locale = defaultLocale;
 
             const permalinkProperty = locale
@@ -63,8 +63,7 @@ export class LocalizedPageService implements IPageService {
 
             const query = Query
                 .from<PageContract>()
-                .where(permalinkProperty, Operator.equals, permalink)
-                .select(`${Constants.localePrefix}/${defaultLocale}`);
+                .where(permalinkProperty, Operator.equals, permalink);
 
             result = await this.objectStorage.searchObjects<any>(pagesPath, query);
 
@@ -81,7 +80,7 @@ export class LocalizedPageService implements IPageService {
             return this.localizedPageContractToPageContract(locale, defaultLocale, firstPage);
         }
         else {
-            return firstPage;
+            return <PageContract>firstPage;
         }
     }
 
@@ -209,9 +208,39 @@ export class LocalizedPageService implements IPageService {
             throw new Error(`Parameter "content" not specified.`);
         }
 
-        locale = await this.localeService.getCurrentLocale();
+        const localizedPageContract = await this.objectStorage.getObject<LocalizedPageContract>(pageKey);
 
-        const page = await this.getPageByKey(pageKey);
-        this.objectStorage.updateObject(page.contentKey, content);
+        if (!localizedPageContract) {
+            throw new Error(`Page with key "${pageKey}" not found.`);
+        }
+
+        if (!locale) {
+            locale = await this.localeService.getCurrentLocale();
+        }
+
+        let pageMetadata = localizedPageContract.locales[locale];
+
+        if (!pageMetadata) {
+            const defaultLocale = await this.localeService.getDefaultLocale();
+            const defaultPageMetadata = localizedPageContract.locales[defaultLocale];
+            const identifier = Utils.guid();
+
+            pageMetadata = {
+                title: defaultPageMetadata.title,
+                description: defaultPageMetadata.description,
+                permalink: defaultPageMetadata.permalink,
+                contentKey: `${documentsPath}/${identifier}`
+            };
+
+            localizedPageContract.locales[locale] = pageMetadata;
+
+            await this.objectStorage.updateObject(pageKey, localizedPageContract);
+        }
+        else if (!pageMetadata.contentKey) {
+            const identifier = Utils.guid();
+            pageMetadata.contentKey = `${documentsPath}/${identifier}`;
+        }
+
+        await this.objectStorage.updateObject(pageMetadata.contentKey, content);
     }
 }

@@ -30,21 +30,21 @@ export class ContentItemService implements IContentItemService {
         }
     }
 
-    public async createContentItem(url: string, title: string, description: string, keywords: string): Promise<ContentItemContract> {
-        const locale = await this.localeService.getCurrentLocale();
-        const defaultLocale = await this.localeService.getDefaultLocale();
+    // public async createContentItem(url: string, title: string, description: string, keywords: string): Promise<ContentItemContract> {
+    //     const locale = await this.localeService.getCurrentLocale();
+    //     const defaultLocale = await this.localeService.getDefaultLocale();
         
-        const identifier = Utils.guid();
-        const contentItemKey = `${contentItemsPath}/${identifier}`;
-        const contentKey = `${documentsPath}/${identifier}`;
+    //     const identifier = Utils.guid();
+    //     const contentItemKey = `${contentItemsPath}/${identifier}`;
+    //     const contentKey = `${documentsPath}/${identifier}`;
 
-        const result = await this.objectStorage.getObject<any>(key);
+    //     const result = await this.objectStorage.getObject<any>(key);
 
-        if (locale) {
-            return this.localizedPageContractToPageContract(locale, defaultLocale, result);
-        }
-        else {
-            return result;
-        }
-    }
+    //     if (locale) {
+    //         return this.localizedPageContractToPageContract(locale, defaultLocale, result);
+    //     }
+    //     else {
+    //         return result;
+    //     }
+    // }
 }

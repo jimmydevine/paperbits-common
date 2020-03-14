@@ -110,7 +110,7 @@ export class LocalizedPageService implements IPageService {
         const defaultLocale = await this.localeService.getDefaultLocale();
 
         const query = Query
-            .from<PageContract>()
+            .from<PageContract>();
         // .where("title", Operator.contains, pattern)
         // .orderBy("title");
         // .select(`${Constants.localePrefix}/${locale}`);
@@ -149,7 +149,6 @@ export class LocalizedPageService implements IPageService {
     public async createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<PageContract> {
         locale = await this.localeService.getCurrentLocale();
 
-
         const identifier = Utils.guid();
         const pageKey = `${pagesPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;
@@ -181,7 +180,13 @@ export class LocalizedPageService implements IPageService {
             throw new Error(`Parameter "page" not specified.`);
         }
 
-        await this.objectStorage.updateObject<PageContract>(page.key, page);
+        if (!locale) {
+            locale = await this.localeService.getCurrentLocale();
+        }
+
+        const localePath = `${page.key}/${Constants.localePrefix}/${locale}`;
+
+        await this.objectStorage.updateObject<PageContract>(localePath, page);
     }
 
     public async getPageContent(pageKey: string, locale?: string): Promise<Contract> {

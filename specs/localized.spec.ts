@@ -138,11 +138,6 @@ describe("Localized page service", async () => {
                         }
                     }
                 }
-            },
-            files: {
-                "en-us-content": {
-                    type: "localized-node"
-                }
             }
         };
 
@@ -176,11 +171,6 @@ describe("Localized page service", async () => {
                         }
                     }
                 }
-            },
-            files: {
-                "en-us-content": {
-                    type: "localized-node"
-                }
             }
         };
 
@@ -191,6 +181,9 @@ describe("Localized page service", async () => {
 
         const pageContract = await localizedService.getPageByKey("pages/page1", "ru-ru");
         assert.isTrue(pageContract.title === "О нас", "Page metadata is in invalid locale.");
+
+        const pageContract2 = await localizedService.getPageByPermalink("/about", "ru-ru");
+        assert.isTrue(pageContract2.title === "О нас", "Page metadata is in invalid locale.");
     });
 
     it("Returns page content in specified locale.", async () => {

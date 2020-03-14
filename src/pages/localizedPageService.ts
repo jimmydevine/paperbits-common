@@ -89,7 +89,10 @@ export class LocalizedPageService implements IPageService {
             throw new Error(`Parameter "key" not specified.`);
         }
 
-        locale = await this.localeService.getCurrentLocale();
+        if (!locale) {
+            locale = await this.localeService.getCurrentLocale();
+        }
+
         const defaultLocale = await this.localeService.getDefaultLocale();
 
         const result = await this.objectStorage.getObject<any>(key);

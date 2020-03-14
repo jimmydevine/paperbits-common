@@ -38,41 +38,41 @@ export class LocalizedPageService implements IPageService {
         locale = locale || await this.localeService.getCurrentLocale();
         const defaultLocale = await this.localeService.getDefaultLocale();
 
-        /* Attempting to get selected locale */
+        // const permalinkProperty = locale
+        //     ? `${Constants.localePrefix}/${locale}/permalink`
+        //     : `permalink`;
 
-        const permalinkProperty = locale
-            ? `${Constants.localePrefix}/${locale}/permalink`
-            : `permalink`;
+        const permalinkProperty = `${Constants.localePrefix}/${defaultLocale}/permalink`; // We use permalink from default locale only
 
         const query = Query
             .from<PageContract>()
             .where(permalinkProperty, Operator.equals, permalink);
 
-        let result = await this.objectStorage.searchObjects<any>(pagesPath, query);
+        const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
 
         const pages: any[] = Object.values(result);
 
-        if (pages.length === 0) {
-            /* Attempting to get default locale */
+        // if (pages.length === 0) {
+        //     /* Attempting to get default locale */
 
-            locale = defaultLocale;
+        //     locale = defaultLocale;
 
-            const permalinkProperty = locale
-                ? `${Constants.localePrefix}/${defaultLocale}/permalink`
-                : `permalink`;
+        //     const permalinkProperty = locale
+        //         ? `${Constants.localePrefix}/${defaultLocale}/permalink`
+        //         : `permalink`;
 
-            const query = Query
-                .from<PageContract>()
-                .where(permalinkProperty, Operator.equals, permalink);
+        //     const query = Query
+        //         .from<PageContract>()
+        //         .where(permalinkProperty, Operator.equals, permalink);
 
-            result = await this.objectStorage.searchObjects<any>(pagesPath, query);
+        //     result = await this.objectStorage.searchObjects<any>(pagesPath, query);
 
-            const pages = Object.values(result);
+        //     const pages = Object.values(result);
 
-            if (pages.length === 0) {
-                return null;
-            }
-        }
+        //     if (pages.length === 0) {
+        //         return null;
+        //     }
+        // }
 
         const firstPage = pages[0];
 
@@ -192,7 +192,7 @@ export class LocalizedPageService implements IPageService {
         if (!locale) {
             locale = await this.localeService.getCurrentLocale();
         }
-        
+
         const defaultLocale = await this.localeService.getDefaultLocale();
         const localizedPageContract = await this.objectStorage.getObject<LocalizedPageContract>(pageKey);
 

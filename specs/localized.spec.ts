@@ -10,10 +10,11 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "en-us": {
                             title: "About",
-                            permalink: "en-us/about"
+                            permalink: "/about"
                         }
                     }
                 }
@@ -36,6 +37,7 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "ru-ru": {
                             title: "О нас",
@@ -63,10 +65,11 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "en-us": {
                             title: "About",
-                            permalink: "en-us/about"
+                            permalink: "/about"
                         },
                         "ru-ru": {
                             title: "О нас",
@@ -93,6 +96,7 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "ru-ru": {
                             title: "О нас",
@@ -125,10 +129,11 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "en-us": {
                             title: "About",
-                            permalink: "en-us/about",
+                            permalink: "/about",
                             contentKey: "files/en-us-content"
                         }
                     }
@@ -146,18 +151,22 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
 
-        const pageContract = await localizedService.getPageByKey("pages/page1", "ru-ru");
-        assert.isTrue(pageContract.title === "About", "Page metadata is in invalid locale.");
+        const pageContract1 = await localizedService.getPageByKey("pages/page1", "ru-ru");
+        assert.isTrue(pageContract1.title === "About", "Page metadata is in invalid locale.");
+
+        const pageContract2 = await localizedService.getPageByPermalink("/about", "ru-ru");
+        assert.isTrue(pageContract2.title === "About", "Page metadata is in invalid locale.");
     });
 
     it("Returns page metadata in specified locale.", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "en-us": {
                             title: "About",
-                            permalink: "en-us/about",
+                            permalink: "/about",
                             contentKey: "files/en-us-content"
                         },
                         "ru-ru": {
@@ -188,10 +197,11 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "en-us": {
                             title: "About",
-                            permalink: "en-us/about",
+                            permalink: "/about",
                             contentKey: "files/en-us-content"
                         },
                         "ru-ru": {
@@ -222,10 +232,11 @@ describe("Localized page service", async () => {
         const initialData = {
             pages: {
                 page1: {
+                    key: "pages/page1",
                     locales: {
                         "en-us": {
                             title: "About",
-                            permalink: "en-us/about",
+                            permalink: "/about",
                             contentKey: "files/en-us-content"
                         },
                         "ru-ru": {

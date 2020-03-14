@@ -212,8 +212,6 @@ export class LocalizedPageService implements IPageService {
             pageContent = await this.objectStorage.getObject<Contract>(pageDefaultLocaleMetadata.contentKey);
         }
 
-        console.warn(`Page content with key "${pageMetadata.contentKey}" could not be found.`);
-
         return pageContent;
     }
 

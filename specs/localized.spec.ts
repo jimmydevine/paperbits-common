@@ -180,4 +180,71 @@ describe("Localized page service", async () => {
         const pageContract = await localizedService.getPageByKey("pages/page1", "ru-ru");
         assert.isTrue(pageContract.title === "О нас", "Page metadata is in invalid locale.");
     });
+
+    it("Returns page content in specified locale.", async () => {
+        const initialData = {
+            pages: {
+                page1: {
+                    locales: {
+                        "en-us": {
+                            title: "About",
+                            permalink: "en-us/about",
+                            contentKey: "files/en-us-content"
+                        },
+                        "ru-ru": {
+                            title: "О нас",
+                            permalink: "ru-ru/about",
+                            contentKey: "files/ru-ru-content"
+                        }
+                    }
+                }
+            },
+            files: {
+                "ru-ru-content": {
+                    type: "ru-ru-content"
+                }
+            }
+        };
+
+        const objectStorage = new MockObjectStorage(initialData);
+        const blockService = new MockBlockService();
+        const localeService = new MockLocaleService();
+        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+
+        const pageContent = await localizedService.getPageContent("pages/page1", "ru-ru");
+        assert.isTrue(pageContent.type === "ru-ru-content", "Page content is in invalid locale.");
+    });
+
+    it("Returns page content in default locale when specified locale doesn't exists.", async () => {
+        const initialData = {
+            pages: {
+                page1: {
+                    locales: {
+                        "en-us": {
+                            title: "About",
+                            permalink: "en-us/about",
+                            contentKey: "files/en-us-content"
+                        },
+                        "ru-ru": {
+                            title: "О нас",
+                            permalink: "ru-ru/about"
+                        }
+                    }
+                }
+            },
+            files: {
+                "en-us-content": {
+                    type: "en-us-content"
+                }
+            }
+        };
+
+        const objectStorage = new MockObjectStorage(initialData);
+        const blockService = new MockBlockService();
+        const localeService = new MockLocaleService();
+        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+
+        const pageContent = await localizedService.getPageContent("pages/page1", "ru-ru");
+        assert.isTrue(pageContent.type === "en-us-content", "Page content is in invalid locale.");
+    });
 });

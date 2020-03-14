@@ -184,22 +184,37 @@ export class LocalizedPageService implements IPageService {
         await this.objectStorage.updateObject<PageContract>(page.key, page);
     }
 
-    public async getPageContent(key: string, locale?: string): Promise<Contract> {
-        if (!key) {
-            throw new Error(`Parameter "key" not specified.`);
+    public async getPageContent(pageKey: string, locale?: string): Promise<Contract> {
+        if (!pageKey) {
+            throw new Error(`Parameter "pageKey" not specified.`);
         }
 
-        locale = await this.localeService.getCurrentLocale();
+        if (!locale) {
+            locale = await this.localeService.getCurrentLocale();
+        }
+        
+        const defaultLocale = await this.localeService.getDefaultLocale();
+        const localizedPageContract = await this.objectStorage.getObject<LocalizedPageContract>(pageKey);
 
-        const page: any = await this.getPageByKey(key, locale);
+        let pageMetadata = localizedPageContract.locales[locale];
 
-        // if (locale) {
-        //     const localizedPage = <LocalizedPageContract>page;
-        //     return await this.objectStorage.getObject(localizedPage.locales[locale].contentKey);
-        //     return;
-        // }
+        if (!pageMetadata) {
+            pageMetadata = localizedPageContract.locales[defaultLocale];
+        }
 
-        return await this.objectStorage.getObject(page.contentKey);
+        let pageContent;
+
+        if (pageMetadata.contentKey) {
+            pageContent = await this.objectStorage.getObject<Contract>(pageMetadata.contentKey);
+        }
+        else {
+            const pageDefaultLocaleMetadata = localizedPageContract.locales[defaultLocale];
+            pageContent = await this.objectStorage.getObject<Contract>(pageDefaultLocaleMetadata.contentKey);
+        }
+
+        console.warn(`Page content with key "${pageMetadata.contentKey}" could not be found.`);
+
+        return pageContent;
     }
 
     public async updatePageContent(pageKey: string, content: Contract, locale?: string): Promise<void> {

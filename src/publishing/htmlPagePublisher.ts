@@ -1,10 +1,7 @@
-import template from "./page.html";
 import { HtmlDocumentProvider } from "./htmlDocumentProvider";
 import { HtmlPage } from "./htmlPage";
+import { HtmlPagePublisherPlugin } from "./htmlPagePublisherPlugin";
 
-export interface HtmlPagePublisherPlugin {
-    apply(document: Document, page?: HtmlPage): void;
-}
 
 export class HtmlPagePublisher {
     constructor(
@@ -20,6 +17,15 @@ export class HtmlPagePublisher {
         document.head.appendChild(element);
     }
 
+    private appendStyleLink(document: Document, styleSheetUrl: string): void {
+        const element: HTMLStyleElement = document.createElement("link");
+        element.setAttribute("href", styleSheetUrl);
+        element.setAttribute("rel", "stylesheet");
+        element.setAttribute("type", "text/css");
+
+        document.head.appendChild(element);
+    }
+
     private appendFaviconLink(permalink: string): void {
         const faviconLinkElement = document.createElement("link");
         faviconLinkElement.setAttribute("rel", "shortcut icon");
@@ -27,8 +33,8 @@ export class HtmlPagePublisher {
         document.head.insertAdjacentElement("afterbegin", faviconLinkElement);
     }
 
-    public async renderHtml(page: HtmlPage): Promise<string> {
-        const document = this.htmlDocumentProvider.createDocument(template);
+    public async renderHtml(page: HtmlPage, overridePlugins?: HtmlPagePublisherPlugin[]): Promise<string> {
+        const document = this.htmlDocumentProvider.createDocument(page.template);
         document.title = page.title;
 
         if (page.faviconPermalink) {
@@ -47,10 +53,21 @@ export class HtmlPagePublisher {
             this.appendMetaTag(document, "author", page.author);
         }
 
-        for (const plugin of this.htmlPagePublisherPlugins) {
-            await plugin.apply(document, page);
+        page.styleReferences.forEach(reference => {
+            this.appendStyleLink(document, reference);
+        });
+
+        if (overridePlugins) {
+            for (const plugin of overridePlugins) {
+                await plugin.apply(document, page);
+            }
+        }
+        else {
+            for (const plugin of this.htmlPagePublisherPlugins) {
+                await plugin.apply(document, page);
+            }
         }
 
-        return document.documentElement.outerHTML;
+        return "<!DOCTYPE html>" + document.documentElement.outerHTML;
     }
 }

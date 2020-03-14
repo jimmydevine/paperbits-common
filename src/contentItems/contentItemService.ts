@@ -28,9 +28,15 @@ export class ContentItemService implements IContentItemService {
         if (!key.startsWith("pages")) {
             return await this.objectStorage.getObject<any>(key);
         }
+    }
 
+    public async createContentItem(url: string, title: string, description: string, keywords: string): Promise<ContentItemContract> {
         const locale = await this.localeService.getCurrentLocale();
         const defaultLocale = await this.localeService.getDefaultLocale();
+        
+        const identifier = Utils.guid();
+        const contentItemKey = `${contentItemsPath}/${identifier}`;
+        const contentKey = `${documentsPath}/${identifier}`;
 
         const result = await this.objectStorage.getObject<any>(key);
 

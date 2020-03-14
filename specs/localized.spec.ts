@@ -24,11 +24,12 @@ describe("Localized page service", async () => {
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
-        const content: Contract = { type: "localized-node" };
+        const content: Contract = { type: "ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content, "ru-ru");
 
-        console.log(JSON.stringify(objectStorage.getData(), null, 4));
+        const resultStorageState = objectStorage.getData();
+        assert(Object.values(resultStorageState["files"])[0]["type"] === "ru-ru-content");
     });
 
     it("Can create page content when metadata exists.", async () => {
@@ -50,11 +51,12 @@ describe("Localized page service", async () => {
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
-        const content: Contract = { type: "localized-node" };
+        const content: Contract = { type: "ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content, "ru-ru");
 
-        console.log(JSON.stringify(objectStorage.getData(), null, 4));
+        const resultStorageState = objectStorage.getData();
+        assert(resultStorageState["files"]["ru-ru-content"]["type"] === "ru-ru-content");
     });
 
     it("Can create page content when metadata exists, but no contentKey defined yet.", async () => {
@@ -79,11 +81,12 @@ describe("Localized page service", async () => {
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
-        const content: Contract = { type: "localized-node" };
+        const content: Contract = { type: "ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content, "ru-ru");
 
-        console.log(JSON.stringify(objectStorage.getData(), null, 4));
+        const resultStorageState = objectStorage.getData();
+        assert(Object.values(resultStorageState["files"])[0]["type"] === "ru-ru-content");
     });
 
     it("Can update page content.", async () => {
@@ -110,11 +113,12 @@ describe("Localized page service", async () => {
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
-        const content: Contract = { type: "updated-localized-node" };
+        const content: Contract = { type: "updated-ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content, "ru-ru");
 
-        console.log(JSON.stringify(objectStorage.getData(), null, 4));
+        const resultStorageState = objectStorage.getData();
+        assert(resultStorageState["files"]["ru-ru-content"]["type"] === "updated-ru-ru-content");
     });
 
     it("Returns page metadata in default locale when specified locale doesn't exist.", async () => {
@@ -143,8 +147,7 @@ describe("Localized page service", async () => {
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
 
         const pageContract = await localizedService.getPageByKey("pages/page1", "ru-ru");
-
-        console.log(JSON.stringify(pageContract, null, 4));
+        assert.isTrue(pageContract.title === "About", "Page metadata is in invalid locale.");
     });
 
     it("Returns page metadata in specified locale.", async () => {

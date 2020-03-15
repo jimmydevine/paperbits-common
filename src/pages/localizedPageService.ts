@@ -147,7 +147,9 @@ export class LocalizedPageService implements IPageService {
     }
 
     public async createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<PageContract> {
-        locale = await this.localeService.getCurrentLocale();
+        if (!locale) {
+            locale = await this.localeService.getDefaultLocale();
+        }
 
         const identifier = Utils.guid();
         const pageKey = `${pagesPath}/${identifier}`;

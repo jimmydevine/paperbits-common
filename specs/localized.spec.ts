@@ -288,4 +288,17 @@ describe("Localized page service", async () => {
         const pageContent = await localizedService.getPageContent("pages/page1", "ru-ru");
         assert.isTrue(pageContent.type === "en-us-content", "Page content is in invalid locale.");
     });
+
+    it("Can create page in specified locale.", async () => {
+        const initialData = {};
+        const objectStorage = new MockObjectStorage(initialData);
+        const blockService = new MockBlockService();
+        const localeService = new MockLocaleService();
+        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+
+        await localizedService.createPage("/about", "О нас", "", "", "ru-ru");
+
+        const resultStorageState = objectStorage.getData();
+        assert.isTrue(Object.values(resultStorageState["pages"])[0]["locales"]["ru-ru"]["title"] === "О нас");
+    });
 });

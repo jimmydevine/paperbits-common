@@ -74,6 +74,10 @@ export class LocalizedPageService implements IPageService {
         //     }
         // }
 
+        if (pages.length === 0) {
+            return null;
+        }
+
         const firstPage = pages[0];
 
         if (locale) {
@@ -145,7 +149,7 @@ export class LocalizedPageService implements IPageService {
         const pageKey = `${pagesPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;
 
-        const page: LocalizedPageContract = {
+        const localizedPage: LocalizedPageContract = {
             key: pageKey,
             locales: {
                 [locale]: {
@@ -158,13 +162,22 @@ export class LocalizedPageService implements IPageService {
             }
         };
 
-        await this.objectStorage.addObject(pageKey, page);
+        await this.objectStorage.addObject(pageKey, localizedPage);
 
         const template = await this.blockService.getBlockContent(templateBlockKey);
 
         await this.objectStorage.addObject(contentKey, template);
 
-        return <any>page;
+        const pageContent: PageContract = {
+            key: pageKey,
+            title: title,
+            description: description,
+            keywords: keywords,
+            permalink: permalink,
+            contentKey: contentKey
+        };
+
+        return pageContent;
     }
 
     public async updatePage(page: PageContract, locale?: string): Promise<void> {

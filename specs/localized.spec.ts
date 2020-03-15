@@ -302,7 +302,6 @@ describe("Localized page service", async () => {
         assert.isTrue(Object.values(resultStorageState["pages"])[0]["locales"]["en-us"]["title"] === "About");
     });
 
-
     it("Can delete page.", async () => {
         const initialData = {
             pages: {

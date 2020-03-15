@@ -273,7 +273,8 @@ export class OfflineObjectStorage implements IObjectStorage {
                     let meetsCriteria = true;
 
                     for (const filter of query.filters) {
-                        const property = x[filter.left];
+                        // const property = x[filter.left];
+                        const property = Objects.getObjectAt<any>(filter.left, x);
 
                         if (typeof filter.right === "boolean") {
                             if (filter.operator !== Operator.equals) {
@@ -294,7 +295,7 @@ export class OfflineObjectStorage implements IObjectStorage {
                             continue;
                         }
 
-                        let left = x[filter.left];
+                        let left = Objects.getObjectAt<any>(filter.left, x);
                         let right = filter.right;
 
                         if (typeof left === "string") {

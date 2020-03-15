@@ -17,7 +17,9 @@ export class LocalizedPageService implements IPageService {
         private readonly objectStorage: IObjectStorage,
         private readonly blockService: IBlockService,
         private readonly localeService: ILocaleService
-    ) { }
+    ) {
+        console.log("LOC SERVICE");
+    }
 
     private localizedPageContractToPageContract(localeCode: string, defaultLocale: string, localizedPageContract: LocalizedPageContract): PageContract {
         const pageMetadata = localizedPageContract[Constants.localePrefix][localeCode] || localizedPageContract[Constants.localePrefix][defaultLocale];
@@ -115,9 +117,8 @@ export class LocalizedPageService implements IPageService {
 
         const query = Query
             .from<PageContract>();
-        // .where("title", Operator.contains, pattern)
-        // .orderBy("title");
-        // .select(`${Constants.localePrefix}/${locale}`);
+            // .where("title", Operator.contains, pattern)
+            // .orderBy("title");
 
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
         const pages = Object.values(result);

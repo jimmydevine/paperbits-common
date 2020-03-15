@@ -1,11 +1,16 @@
-export class LocaleModel {
+export interface LocaleModel {
+    /**
+     * Own key.
+     */
+    key: string;
+
     /**
      * Locale code, e.g. "en-us".
      */
-    public code: string;
+    code: string;
 
     /**
      * Locale display name, e.g. English (US). 
      */
-    public displayName: string;
+    displayName: string;
 }

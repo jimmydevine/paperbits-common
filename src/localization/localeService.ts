@@ -1,27 +1,44 @@
 import { ILocaleService } from "./ILocaleService";
 import { LocaleModel } from ".";
+import { IObjectStorage } from "../persistence";
+
+const localesPath = "locales";
 
 export class LocaleService implements ILocaleService {
     private currentLocale: string;
-    
-    constructor() {
+
+    constructor(private objectStorage: IObjectStorage) {
         this.currentLocale = "en-us";
     }
 
     public async getLocales(): Promise<LocaleModel[]> {
-        const localeEnUs = new LocaleModel();
-        localeEnUs.code = "en-us";
-        localeEnUs.displayName = "English (US)";
+        const localeEnUs: LocaleModel = {
+            key: `${localesPath}/en-us`,
+            code: "en-us",
+            displayName: "English (US)"
+        };
 
-        const localeRuRu = new LocaleModel();
-        localeRuRu.code = "ru-ru";
-        localeRuRu.displayName = "Русский (Россия)";
+        const result = await this.objectStorage.getObject(localesPath);
 
-        return [localeEnUs, localeRuRu];
+        if (!result) {
+            return [localeEnUs];
+        }
+
+        const locales = Object.values(result);
+
+        return [localeEnUs].concat(locales);
     }
 
     public async createLocale(code: string, displayName: string): Promise<void> {
-        // TODO
+        const key = `${localesPath}/${code}`;
+
+        const locale: LocaleModel = {
+            key: key,
+            code: code,
+            displayName: displayName
+        };
+
+        await this.objectStorage.addObject(key, locale);
     }
 
     public async deleteLocale(code: string): Promise<void> {

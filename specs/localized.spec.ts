@@ -289,16 +289,52 @@ describe("Localized page service", async () => {
         assert.isTrue(pageContent.type === "en-us-content", "Page content is in invalid locale.");
     });
 
-    it("Can create page in specified locale.", async () => {
+    it("Can create page.", async () => {
         const initialData = {};
         const objectStorage = new MockObjectStorage(initialData);
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
         const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
 
-        await localizedService.createPage("/about", "О нас", "", "", "ru-ru");
+        await localizedService.createPage("/about", "About", "", "");
 
         const resultStorageState = objectStorage.getData();
-        assert.isTrue(Object.values(resultStorageState["pages"])[0]["locales"]["ru-ru"]["title"] === "О нас");
+        assert.isTrue(Object.values(resultStorageState["pages"])[0]["locales"]["en-us"]["title"] === "About");
+    });
+
+
+    it("Can delete page.", async () => {
+        const initialData = {
+            pages: {
+                page1: {
+                    key: "pages/page1",
+                    locales: {
+                        "en-us": {
+                            title: "About",
+                            permalink: "/about",
+                            contentKey: "files/en-us-content"
+                        },
+                        "ru-ru": {
+                            title: "О нас",
+                            contentKey: "files/ru-ru-content"
+                        }
+                    }
+                }
+            },
+            files: {
+                "en-us-content": {},
+                "ru-ru-content": {}
+            }
+        };
+        const objectStorage = new MockObjectStorage(initialData);
+        const blockService = new MockBlockService();
+        const localeService = new MockLocaleService();
+        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+
+        await localizedService.deletePage({ key: "pages/page1", title: "About" });
+
+        const resultStorageState = objectStorage.getData();
+        assert.isTrue(Object.keys(resultStorageState["pages"]).length === 0);
+        assert.isTrue(Object.keys(resultStorageState["files"]).length === 0);
     });
 });

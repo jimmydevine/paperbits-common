@@ -121,36 +121,26 @@ export class LocalizedPageService implements IPageService {
         return pages.map(x => this.localizedPageContractToPageContract(locale, defaultLocale, x));
     }
 
-    public async deletePage(page: PageContract | LocalizedPageContract, locale?: string): Promise<void> {
+    public async deletePage(page: PageContract): Promise<void> {
         if (!page) {
             throw new Error(`Parameter "page" not specified.`);
         }
 
-        locale = await this.localeService.getCurrentLocale();
+        const localizedPageContract = await this.objectStorage.getObject<LocalizedPageContract>(page.key);
 
-        if (locale) {
-            /* if locale is specified, we delete only locale */
-            const localizedPage = <LocalizedPageContract>page;
-            const deleteContentPromise = this.objectStorage.deleteObject(localizedPage.locales[locale].contentKey);
-            const deletePagePromise = this.objectStorage.deleteObject(`${page.key}/${Constants.localePrefix}/${locale}`);
+        if (localizedPageContract.locales) {
+            const contentKeys = Object.values(localizedPageContract.locales).map(x => x.contentKey);
 
-            await Promise.all([deleteContentPromise, deletePagePromise]);
-            return;
+            for (const contentKey of contentKeys) {
+                await this.objectStorage.deleteObject(contentKey);
+            }
         }
 
-        /* if locale is not specified, we delete entire page */
-        const regularPage = <PageContract>page;
-        const deleteContentPromise = this.objectStorage.deleteObject(regularPage.contentKey);
-        const deletePagePromise = this.objectStorage.deleteObject(regularPage.key);
-
-        await Promise.all([deleteContentPromise, deletePagePromise]);
+        await this.objectStorage.deleteObject(page.key);
     }
 
-    public async createPage(permalink: string, title: string, description: string, keywords: string, locale?: string): Promise<PageContract> {
-        if (!locale) {
-            locale = await this.localeService.getDefaultLocale();
-        }
-
+    public async createPage(permalink: string, title: string, description: string, keywords: string): Promise<PageContract> {
+        const locale = await this.localeService.getDefaultLocale();
         const identifier = Utils.guid();
         const pageKey = `${pagesPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;

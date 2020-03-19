@@ -7,7 +7,7 @@ export interface PageMetadata {
     /**
      * Page title.
      */
-    title: string;
+    title?: string;
 
     /**
      * Page description. This property is included in SEO attributes.

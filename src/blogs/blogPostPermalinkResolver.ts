@@ -1,16 +1,16 @@
-import { IPageService, PageContract } from ".";
+import { IBlogService, BlogPostContract } from ".";
 import { Contract } from "../contract";
 import { HyperlinkContract } from "../editing";
 import { HyperlinkModel, IPermalinkResolver } from "../permalinks";
 import { ContentItemContract } from "../contentItems";
 
-const pagesPath = "pages/";
+const blogPostsPath = "blogPosts/";
 
-export class PagePermalinkResolver implements IPermalinkResolver {
-    constructor(private readonly pageService: IPageService) { }
+export class BlogPostPermalinkResolver implements IPermalinkResolver {
+    constructor(private readonly blogPostService: IBlogService) { }
 
     public canHandleTarget(targetKey: string): boolean {
-        return targetKey.startsWith(pagesPath);
+        return targetKey.startsWith(blogPostsPath);
     }
 
     public async getUrlByTargetKey(targetKey: string, locale?: string): Promise<string> {
@@ -18,11 +18,11 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error("Target key cannot be null or empty.");
         }
 
-        if (!targetKey.startsWith(pagesPath)) {
+        if (!targetKey.startsWith(blogPostsPath)) {
             return null;
         }
 
-        const contentItem = await this.pageService.getPageByKey(targetKey, locale);
+        const contentItem = await this.blogPostService.getBlogPostByKey(targetKey, locale);
 
         if (!contentItem) {
             throw new Error(`Could not find permalink with key ${targetKey}.`);
@@ -31,11 +31,11 @@ export class PagePermalinkResolver implements IPermalinkResolver {
         return contentItem.permalink;
     }
 
-    private async getHyperlink(pageContract: PageContract, target: string = "_self"): Promise<HyperlinkModel> {
+    private async getHyperlink(blogPostContract: BlogPostContract, target: string = "_self"): Promise<HyperlinkModel> {
         const hyperlinkModel = new HyperlinkModel();
-        hyperlinkModel.targetKey = pageContract.key;
-        hyperlinkModel.href = pageContract.permalink;
-        hyperlinkModel.title = pageContract.title || pageContract.permalink;
+        hyperlinkModel.targetKey = blogPostContract.key;
+        hyperlinkModel.href = blogPostContract.permalink;
+        hyperlinkModel.title = blogPostContract.title || blogPostContract.permalink;
         hyperlinkModel.target = target;
 
         return hyperlinkModel;
@@ -46,17 +46,17 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error("Target key cannot be null or empty.");
         }
 
-        if (!hyperlinkContract.targetKey.startsWith("pages/")) {
+        if (!hyperlinkContract.targetKey.startsWith("blogPosts/")) {
             return null;
         }
 
         let hyperlinkModel: HyperlinkModel;
 
         if (hyperlinkContract.targetKey) {
-            const pageContract = await this.pageService.getPageByKey(hyperlinkContract.targetKey, locale);
+            const blogPostContract = await this.blogPostService.getBlogPostByKey(hyperlinkContract.targetKey, locale);
 
-            if (pageContract) {
-                return this.getHyperlink(pageContract, hyperlinkContract.target);
+            if (blogPostContract) {
+                return this.getHyperlink(blogPostContract, hyperlinkContract.target);
             }
         }
 
@@ -75,11 +75,11 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error("Target key cannot be null or empty.");
         }
 
-        if (!targetKey.startsWith(pagesPath)) {
+        if (!targetKey.startsWith(blogPostsPath)) {
             return null;
         }
 
-        const contentItem = await this.pageService.getPageByKey(targetKey, locale);
+        const contentItem = await this.blogPostService.getBlogPostByKey(targetKey, locale);
 
         if (!contentItem) {
             return null;
@@ -95,10 +95,10 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error(`Parameter "permalink" not specified.`);
         }
 
-        const pageContract = await this.pageService.getPageByPermalink(permalink, locale);
-        const pageContent = await this.pageService.getPageContent(pageContract.key);
+        const blogPostContract = await this.blogPostService.getBlogPostByPermalink(permalink, locale);
+        const blogPostContent = await this.blogPostService.getBlogPostContent(blogPostContract.key);
 
-        return pageContent;
+        return blogPostContent;
     }
 
     public async getContentItemByPermalink(permalink: string, locale?: string): Promise<ContentItemContract> {
@@ -106,8 +106,8 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error(`Parameter "permalink" not specified.`);
         }
 
-        const pageContract = await this.pageService.getPageByPermalink(permalink, locale);
+        const blogPostContract = await this.blogPostService.getBlogPostByPermalink(permalink, locale);
 
-        return pageContract;
+        return blogPostContract;
     }
 }

@@ -1,6 +1,8 @@
 import { IPermalinkResolver } from "./";
 import { HyperlinkContract } from "../editing";
 import { HyperlinkModel } from "./hyperlinkModel";
+import { Contract } from "..";
+import { ContentItemContract } from "../contentItems";
 
 export class PermalinkResolver implements IPermalinkResolver {
     constructor(private readonly permalinkResolvers: IPermalinkResolver[]) { }
@@ -51,5 +53,37 @@ export class PermalinkResolver implements IPermalinkResolver {
         const hyperlink = await permalinkResolver.getHyperlinkByTargetKey(targetKey, locale);
 
         return hyperlink;
+    }
+
+    public async getContentByPermalink(permalink: string, locale?: string): Promise<Contract> {
+        for (const permalinkResolver of this.permalinkResolvers) {
+            if (!permalinkResolver.getContentByPermalink) {
+                continue;
+            }
+
+            const contentItem = await permalinkResolver?.getContentByPermalink(permalink, locale);
+
+            if (contentItem) {
+                return contentItem;
+            }
+        }
+
+        return null;
+    }
+
+    public async getContentItemByPermalink(permalink: string, locale?: string): Promise<ContentItemContract> {
+        for (const permalinkResolver of this.permalinkResolvers) {
+            if (!permalinkResolver.getContentItemByPermalink) {
+                continue;
+            }
+
+            const contentItem = await permalinkResolver?.getContentItemByPermalink(permalink, locale);
+
+            if (contentItem) {
+                return contentItem;
+            }
+        }
+
+        return null;
     }
 }

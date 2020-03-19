@@ -12,17 +12,17 @@ export interface ContentItemContract {
     /**
      * ContentItem title.
      */
-    title: string;
+    title?: string;
 
     /**
      * ContentItem description. This property is included in SEO attributes.
      */
-    description: string;
+    description?: string;
 
     /**
      * ContentItem keywords. This property is included in SEO attributes.
      */
-    keywords: string;
+    keywords?: string;
 
     /**
      * Key of a document containing contentItem content.

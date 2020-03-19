@@ -7,12 +7,12 @@ import { HyperlinkModel } from "./hyperlinkModel";
 export class PermalinkResolver implements IPermalinkResolver {
     constructor(private readonly contentItemService: IContentItemService) { }
 
-    public async getUrlByTargetKey(targetKey: string): Promise<string> {
+    public async getUrlByTargetKey(targetKey: string, locale?: string): Promise<string> {
         if (!targetKey) {
             throw new Error("Target key cannot be null or empty.");
         }
 
-        const contentItem = await this.contentItemService.getContentItemByKey(targetKey);
+        const contentItem = await this.contentItemService.getContentItemByKey(targetKey, locale);
 
         if (!contentItem) {
             throw new Error(`Could not find permalink with key ${targetKey}.`);
@@ -21,7 +21,7 @@ export class PermalinkResolver implements IPermalinkResolver {
         return contentItem.permalink;
     }
 
-    public async getHyperlinkByContentType(contentItem: ContentItemContract): Promise<HyperlinkModel> {
+    private async getHyperlinkByContentType(contentItem: ContentItemContract): Promise<HyperlinkModel> {
         const hyperlinkModel = new HyperlinkModel();
         hyperlinkModel.targetKey = contentItem.key;
         hyperlinkModel.href = contentItem.permalink;
@@ -30,11 +30,11 @@ export class PermalinkResolver implements IPermalinkResolver {
         return hyperlinkModel;
     }
 
-    public async getHyperlinkFromConfig(hyperlinkContract: HyperlinkContract): Promise<HyperlinkModel> {
+    public async getHyperlinkFromConfig(hyperlinkContract: HyperlinkContract, locale?: string): Promise<HyperlinkModel> {
         let hyperlinkModel: HyperlinkModel;
 
         if (hyperlinkContract.targetKey) {
-            const contentItem = await this.contentItemService.getContentItemByKey(hyperlinkContract.targetKey);
+            const contentItem = await this.contentItemService.getContentItemByKey(hyperlinkContract.targetKey, locale);
 
             if (contentItem) {
                 hyperlinkModel = await this.getHyperlinkByContentType(contentItem);
@@ -61,8 +61,8 @@ export class PermalinkResolver implements IPermalinkResolver {
         return hyperlinkModel;
     }
 
-    public async getHyperlinkByTargetKey(targetKey: string): Promise<HyperlinkModel> {
-        const contentItem = await this.contentItemService.getContentItemByKey(targetKey);
+    public async getHyperlinkByTargetKey(targetKey: string, locale?: string): Promise<HyperlinkModel> {
+        const contentItem = await this.contentItemService.getContentItemByKey(targetKey, locale);
         
         if (!contentItem) {
             return null;

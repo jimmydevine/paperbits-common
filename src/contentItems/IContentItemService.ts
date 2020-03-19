@@ -8,5 +8,5 @@ export interface IContentItemService {
     /**
      * Returns contentItem by specified key.
      */
-    getContentItemByKey(key: string): Promise<ContentItemContract>;
+    getContentItemByKey(key: string, locale?: string): Promise<ContentItemContract>;
 }

@@ -20,20 +20,35 @@ export class ContentItemService implements IContentItemService {
         return pageContract;
     }
 
-    public async getContentItemByKey(key: string): Promise<ContentItemContract> {
+    public async getContentItemByKey(key: string, locale?: string): Promise<ContentItemContract> {
         if (!key) {
             throw new Error(`Parameter "key" not specified.`);
         }
 
-        if (!key.startsWith("pages")) {
-            return await this.objectStorage.getObject<any>(key);
+        const result = await this.objectStorage.getObject<any>(key);
+
+        if (!result) {
+            return null;
+        }
+
+        if (!locale) {
+            locale = await this.localeService.getCurrentLocale();
+        }
+
+        const defaultLocale = await this.localeService.getDefaultLocale();
+
+        if (locale && key.startsWith("pages/")) {
+            return this.localizedPageContractToPageContract(locale, defaultLocale, result);
+        }
+        else {
+            return result;
         }
     }
 
     // public async createContentItem(url: string, title: string, description: string, keywords: string): Promise<ContentItemContract> {
     //     const locale = await this.localeService.getCurrentLocale();
     //     const defaultLocale = await this.localeService.getDefaultLocale();
-        
+
     //     const identifier = Utils.guid();
     //     const contentItemKey = `${contentItemsPath}/${identifier}`;
     //     const contentKey = `${documentsPath}/${identifier}`;

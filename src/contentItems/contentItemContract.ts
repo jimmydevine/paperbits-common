@@ -25,16 +25,6 @@ export interface ContentItemContract {
     keywords: string;
 
     /**
-     * Facebook Open Graph: This is how you describe the kind of object you are sharing: website, article, blog.
-     */
-    ogType?: "website" | "article" | "blog";
-
-    /**
-     * Facebook Open Graph: This is how you ensure that a particular thumbnail will be shown when your contentItem is shared.
-     */
-    ogImagePermalinkKey?: string;
-
-    /**
      * Key of a document containing contentItem content.
      */
     contentKey?: string;

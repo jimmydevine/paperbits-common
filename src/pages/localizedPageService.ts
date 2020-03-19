@@ -18,7 +18,6 @@ export class LocalizedPageService implements IPageService {
         private readonly blockService: IBlockService,
         private readonly localeService: ILocaleService
     ) {
-        console.log("LOC SERVICE");
     }
 
     private localizedPageContractToPageContract(localeCode: string, defaultLocale: string, localizedPageContract: LocalizedPageContract): PageContract {

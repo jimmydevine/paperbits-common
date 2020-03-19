@@ -1,54 +1,39 @@
-import { ContentItemContract } from "./../contentItems/contentItemContract";
-import { IContentItemService } from "../contentItems";
 import { IPermalinkResolver } from "./";
 import { HyperlinkContract } from "../editing";
 import { HyperlinkModel } from "./hyperlinkModel";
 
 export class PermalinkResolver implements IPermalinkResolver {
-    constructor(private readonly contentItemService: IContentItemService) { }
+    constructor(private readonly permalinkResolvers: IPermalinkResolver[]) { }
+
+    public canHandleTarget(targetKey: string): boolean {
+        return this.permalinkResolvers.some(x => x.canHandleTarget(targetKey));
+    }
 
     public async getUrlByTargetKey(targetKey: string, locale?: string): Promise<string> {
         if (!targetKey) {
-            throw new Error("Target key cannot be null or empty.");
+            throw new Error(`Parameter "targetKey" not specified.`);
         }
 
-        const contentItem = await this.contentItemService.getContentItemByKey(targetKey, locale);
+        const permalinkResolver = this.permalinkResolvers.find(x => x.canHandleTarget(targetKey));
+        const targetUrl = await permalinkResolver.getUrlByTargetKey(targetKey, locale);
 
-        if (!contentItem) {
-            throw new Error(`Could not find permalink with key ${targetKey}.`);
-        }
-
-        return contentItem.permalink;
+        return targetUrl;
     }
 
-    private async getHyperlinkByContentType(contentItem: ContentItemContract): Promise<HyperlinkModel> {
-        const hyperlinkModel = new HyperlinkModel();
-        hyperlinkModel.targetKey = contentItem.key;
-        hyperlinkModel.href = contentItem.permalink;
-        hyperlinkModel.title = contentItem.title || contentItem["fileName"]; // TODO: Get rid of content item display name guessing.
-
-        return hyperlinkModel;
-    }
-
-    public async getHyperlinkFromConfig(hyperlinkContract: HyperlinkContract, locale?: string): Promise<HyperlinkModel> {
+    public async getHyperlinkFromContract(hyperlinkContract: HyperlinkContract, locale?: string): Promise<HyperlinkModel> {
         let hyperlinkModel: HyperlinkModel;
 
-        if (hyperlinkContract.targetKey) {
-            const contentItem = await this.contentItemService.getContentItemByKey(hyperlinkContract.targetKey, locale);
+        const permalinkResolver = this.permalinkResolvers.find(x => x.canHandleTarget(hyperlinkContract.targetKey));
 
-            if (contentItem) {
-                hyperlinkModel = await this.getHyperlinkByContentType(contentItem);
+        if (permalinkResolver) {
+            hyperlinkModel = await permalinkResolver.getHyperlinkFromContract(hyperlinkContract, locale);
 
-                if (!hyperlinkModel) {
-                    hyperlinkModel = new HyperlinkModel();
-                    hyperlinkModel.title = contentItem.title || contentItem.permalink;
-                    hyperlinkModel.target = hyperlinkContract.target;
-                    hyperlinkModel.targetKey = contentItem.key;
-                    hyperlinkModel.href = contentItem.permalink;
-                }
-
+            if (hyperlinkModel) {
                 return hyperlinkModel;
             }
+        }
+        else {
+            console.warn(`Could not find permalink resolver for target key "${hyperlinkContract.targetKey}"`);
         }
 
         hyperlinkModel = new HyperlinkModel();
@@ -62,12 +47,8 @@ export class PermalinkResolver implements IPermalinkResolver {
     }
 
     public async getHyperlinkByTargetKey(targetKey: string, locale?: string): Promise<HyperlinkModel> {
-        const contentItem = await this.contentItemService.getContentItemByKey(targetKey, locale);
-        
-        if (!contentItem) {
-            return null;
-        }
-        const hyperlink = await this.getHyperlinkByContentType(contentItem);
+        const permalinkResolver = this.permalinkResolvers.find(x => x.canHandleTarget(targetKey));
+        const hyperlink = await permalinkResolver.getHyperlinkByTargetKey(targetKey, locale);
 
         return hyperlink;
     }

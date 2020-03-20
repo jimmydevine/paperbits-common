@@ -336,8 +336,6 @@ export class OfflineObjectStorage implements IObjectStorage {
                 collection = collection.sort((x, y) => {
                     const a = Objects.getObjectAt<any>(property, x);
                     const b = Objects.getObjectAt<any>(property, y);
-                    // const a = x[property].toUpperCase();
-                    // const b = y[property].toUpperCase();
                     const modifier = query.orderDirection === OrderDirection.accending ? 1 : -1;
 
                     if (a > b) {

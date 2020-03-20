@@ -3,19 +3,23 @@ import { LocaleModel } from "../../src/localization";
 
 export class MockLocaleService implements ILocaleService {
     private currentLocale: string;
-    
+
     constructor() {
         this.currentLocale = "en-us";
     }
 
     public async getLocales(): Promise<LocaleModel[]> {
-        const localeEnUs = new LocaleModel();
-        localeEnUs.code = "en-us";
-        localeEnUs.displayName = "English (US)";
+        const localeEnUs = {
+            key: "locales/en-us",
+            code: "en-us",
+            displayName: "English (US)"
+        };
 
-        const localeRuRu = new LocaleModel();
-        localeRuRu.code = "ru-ru";
-        localeRuRu.displayName = "Русский (Россия)";
+        const localeRuRu = {
+            key: "locales/ru-ru",
+            code: "ru-ru",
+            displayName: "Русский (Россия)"
+        };
 
         return [localeEnUs, localeRuRu];
     }

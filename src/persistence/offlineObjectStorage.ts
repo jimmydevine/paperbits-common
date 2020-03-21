@@ -273,8 +273,13 @@ export class OfflineObjectStorage implements IObjectStorage {
                     let meetsCriteria = true;
 
                     for (const filter of query.filters) {
-                        // const property = x[filter.left];
-                        const property = Objects.getObjectAt<any>(filter.left, x);
+                        let left = Objects.getObjectAt<any>(filter.left, x);
+                        let right = filter.right;
+
+                        if (left === undefined && !!right) {
+                            meetsCriteria = false;
+                            continue;
+                        }
 
                         if (typeof filter.right === "boolean") {
                             if (filter.operator !== Operator.equals) {
@@ -283,20 +288,19 @@ export class OfflineObjectStorage implements IObjectStorage {
                                 return;
                             }
 
-                            if (((property === undefined || property === false) && filter.right === true) ||
-                                ((filter.right === undefined || filter.right === false) && property === true)) {
+                            if (((left === undefined || left === false) && filter.right === true) ||
+                                ((filter.right === undefined || filter.right === false) && left === true)) {
                                 meetsCriteria = false;
                             }
                             continue;
                         }
 
-                        if (!property) {
+                        if (!left) {
                             meetsCriteria = false;
                             continue;
                         }
 
-                        let left = Objects.getObjectAt<any>(filter.left, x);
-                        let right = filter.right;
+                        const operator = filter.operator;
 
                         if (typeof left === "string") {
                             left = left.toUpperCase();
@@ -306,11 +310,9 @@ export class OfflineObjectStorage implements IObjectStorage {
                             right = right.toUpperCase();
                         }
 
-                        const operator = filter.operator;
-
                         switch (operator) {
                             case Operator.contains:
-                                if (!left.contains(right)) {
+                                if (left && !left.contains(right)) {
                                     meetsCriteria = false;
                                 }
                                 break;

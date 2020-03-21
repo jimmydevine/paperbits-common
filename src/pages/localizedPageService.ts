@@ -20,7 +20,6 @@ export class LocalizedPageService implements IPageService {
     ) {
     }
 
-    private normalizePermalink
 
     private localizedPageContractToPageContract(localeCode: string, defaultLocale: string, localizedPageContract: LocalizedPageContract): PageContract {
         const pageMetadata = localizedPageContract[Constants.localePrefix][localeCode] || localizedPageContract[Constants.localePrefix][defaultLocale];

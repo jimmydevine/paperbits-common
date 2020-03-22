@@ -38,6 +38,7 @@ describe("Localized page service", async () => {
         await localizedService.updatePage(pageContract);
 
         const resultStorageState = objectStorage.getData();
+
         assert.isTrue(resultStorageState["pages"]["page1"]["locales"]["en-us"]["title"] === "About");
         assert.isTrue(resultStorageState["pages"]["page1"]["locales"]["ru-ru"]["title"] === "О нас");
     });

@@ -1,5 +1,6 @@
 ﻿import * as Utils from "../utils";
 import * as Constants from "../constants";
+import * as Objects from "../";
 import { PageContract, IPageService } from ".";
 import { IObjectStorage, Operator, Query } from "../persistence";
 import { IBlockService } from "../blocks";
@@ -20,12 +21,26 @@ export class LocalizedPageService implements IPageService {
     ) {
     }
 
-    private copyMetadata(pageMetadata: PageMetadata): PageMetadata {
-        return {
-            title: pageMetadata.title,
-            description: pageMetadata.description,
-            permalink: pageMetadata.permalink
+    /**
+     * Copies limited number of metadata properties.
+     */
+    private copyMetadata(sourceMetadata: PageMetadata, targetMetadata: PageMetadata): PageMetadata {
+        if (!sourceMetadata) {
+            throw new Error(`Parameter "sourceMetadata" not specified.`);
         }
+
+        if (!targetMetadata) {
+            throw new Error(`Parameter "targetMetadata" not specified.`);
+        }
+
+        targetMetadata.title = sourceMetadata.title;
+        targetMetadata.description = sourceMetadata.description;
+        targetMetadata.keywords = sourceMetadata.keywords;
+        targetMetadata.permalink = sourceMetadata.permalink;
+        targetMetadata.jsonLd = sourceMetadata.jsonLd;
+        targetMetadata.socialShareData = sourceMetadata.socialShareData;
+
+        return targetMetadata;
     }
 
     private localizedPageContractToPageContract(defaultLocale: string, currentLocale: string, requestedLocale: string, localizedPageContract: LocalizedPageContract): PageContract {
@@ -33,7 +48,7 @@ export class LocalizedPageService implements IPageService {
 
         const pageMetadata = requestedLocale
             ? locales[requestedLocale]
-            : locales[currentLocale] || this.copyMetadata(locales[defaultLocale]);
+            : locales[currentLocale] || this.copyMetadata(locales[defaultLocale], {});
 
         const pageContract: any = {
             key: localizedPageContract.key,
@@ -119,9 +134,9 @@ export class LocalizedPageService implements IPageService {
         const searchLocale = requestedLocale || currentLocale;
 
         const query = Query
-            .from<PageContract>()
-            .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
-            .orderBy(`locales/${searchLocale}/title`);
+            .from<PageContract>();
+        // .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
+        // .orderBy(`locales/${searchLocale}/title`);
 
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
         const pages = Object.values(result);
@@ -193,9 +208,17 @@ export class LocalizedPageService implements IPageService {
             requestedLocale = await this.localeService.getCurrentLocale();
         }
 
-        const localePath = `${page.key}/${Constants.localePrefix}/${requestedLocale}`;
+        const pageContract = await this.objectStorage.getObject<LocalizedPageContract>(page.key);
 
-        await this.objectStorage.updateObject<PageContract>(localePath, page);
+        if (!pageContract) {
+            throw new Error(`Could not update page. Page with key "${page.key}" doesn't exist.`);
+        }
+
+        const existingLocaleMetadata = pageContract.locales[requestedLocale] || {};
+
+        pageContract.locales[requestedLocale] = this.copyMetadata(page, existingLocaleMetadata);
+
+        await this.objectStorage.updateObject<PageContract>(page.key, pageContract);
     }
 
     public async getPageContent(pageKey: string, requestedLocale?: string): Promise<Contract> {
@@ -255,8 +278,9 @@ export class LocalizedPageService implements IPageService {
             const defaultPageMetadata = localizedPageContract.locales[defaultLocale];
             const identifier = Utils.guid();
 
-            pageMetadata = this.copyMetadata(defaultPageMetadata);
-            pageMetadata.contentKey = `${documentsPath}/${identifier}`;
+            pageMetadata = this.copyMetadata(defaultPageMetadata, {
+                contentKey: `${documentsPath}/${identifier}`
+            });
 
             localizedPageContract.locales[requestedLocale] = pageMetadata;
 
@@ -265,6 +289,7 @@ export class LocalizedPageService implements IPageService {
         else if (!pageMetadata.contentKey) {
             const identifier = Utils.guid();
             pageMetadata.contentKey = `${documentsPath}/${identifier}`;
+            await this.objectStorage.updateObject(pageKey, pageMetadata);
         }
 
         await this.objectStorage.updateObject(pageMetadata.contentKey, content);

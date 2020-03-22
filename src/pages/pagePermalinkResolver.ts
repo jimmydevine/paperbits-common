@@ -26,15 +26,18 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             return null;
         }
 
+        const defaultLocale = await this.localeService.getDefaultLocale();
         let pageContract = await this.pageService.getPageByKey(targetKey, locale);
 
         if (!pageContract) {
-            const defaultLocale = await this.localeService.getDefaultLocale();
             pageContract = await this.pageService.getPageByKey(targetKey, defaultLocale);
 
             if (!pageContract) {
                 throw new Error(`Could not find permalink with key ${targetKey}.`);
             }
+        }
+        else if (locale && locale !== defaultLocale) {
+            pageContract.permalink = `/${locale}${pageContract.permalink}`;
         }
 
         return pageContract.permalink;
@@ -88,10 +91,10 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             return null;
         }
 
+        const defaultLocale = await this.localeService.getDefaultLocale();
         let pageContract = await this.pageService.getPageByKey(targetKey, locale);
 
         if (!pageContract) {
-            const defaultLocale = await this.localeService.getDefaultLocale();
             pageContract = await this.pageService.getPageByKey(targetKey, defaultLocale);
 
             if (!pageContract) {
@@ -99,12 +102,11 @@ export class PagePermalinkResolver implements IPermalinkResolver {
                 return null;
             }
         }
+        else if (locale && locale !== defaultLocale) {
+            pageContract.permalink = `/${locale}${pageContract.permalink}`;
+        }
 
         const hyperlink = await this.getHyperlink(pageContract);
-
-        if (!hyperlink.href) {
-            debugger;
-        }
 
         return hyperlink;
     }

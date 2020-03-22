@@ -1,13 +1,17 @@
 import { IPageService, PageContract } from ".";
+import { ContentItemContract } from "../contentItems";
 import { Contract } from "../contract";
 import { HyperlinkContract } from "../editing";
+import { ILocaleService } from "../localization";
 import { HyperlinkModel, IPermalinkResolver } from "../permalinks";
-import { ContentItemContract } from "../contentItems";
 
 const pagesPath = "pages/";
 
 export class PagePermalinkResolver implements IPermalinkResolver {
-    constructor(private readonly pageService: IPageService) { }
+    constructor(
+        private readonly pageService: IPageService,
+        private readonly localeService: ILocaleService
+    ) { }
 
     public canHandleTarget(targetKey: string): boolean {
         return targetKey.startsWith(pagesPath);
@@ -22,13 +26,18 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             return null;
         }
 
-        const contentItem = await this.pageService.getPageByKey(targetKey, locale);
+        let pageContract = await this.pageService.getPageByKey(targetKey, locale);
 
-        if (!contentItem) {
-            throw new Error(`Could not find permalink with key ${targetKey}.`);
+        if (!pageContract) {
+            const defaultLocale = await this.localeService.getDefaultLocale();
+            pageContract = await this.pageService.getPageByKey(targetKey, defaultLocale);
+
+            if (!pageContract) {
+                throw new Error(`Could not find permalink with key ${targetKey}.`);
+            }
         }
 
-        return contentItem.permalink;
+        return pageContract.permalink;
     }
 
     private async getHyperlink(pageContract: PageContract, target: string = "_self"): Promise<HyperlinkModel> {
@@ -46,7 +55,7 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error("Target key cannot be null or empty.");
         }
 
-        if (!hyperlinkContract.targetKey.startsWith("pages/")) {
+        if (!hyperlinkContract.targetKey.startsWith(pagesPath)) {
             return null;
         }
 
@@ -79,13 +88,23 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             return null;
         }
 
-        const contentItem = await this.pageService.getPageByKey(targetKey, locale);
+        let pageContract = await this.pageService.getPageByKey(targetKey, locale);
 
-        if (!contentItem) {
-            return null;
+        if (!pageContract) {
+            const defaultLocale = await this.localeService.getDefaultLocale();
+            pageContract = await this.pageService.getPageByKey(targetKey, defaultLocale);
+
+            if (!pageContract) {
+                console.warn(`Could create hyperlink for target with key ${targetKey} in locale ${locale}.`);
+                return null;
+            }
         }
 
-        const hyperlink = await this.getHyperlink(contentItem);
+        const hyperlink = await this.getHyperlink(pageContract);
+
+        if (!hyperlink.href) {
+            debugger;
+        }
 
         return hyperlink;
     }
@@ -95,7 +114,17 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             throw new Error(`Parameter "permalink" not specified.`);
         }
 
-        const pageContract = await this.pageService.getPageByPermalink(permalink, locale);
+        let pageContract = await this.pageService.getPageByPermalink(permalink, locale);
+
+        if (!pageContract) {
+            const defaultLocale = await this.localeService.getDefaultLocale();
+            pageContract = await this.pageService.getPageByPermalink(permalink, defaultLocale);
+
+            if (!pageContract) {
+                return null;
+            }
+        }
+
         const pageContent = await this.pageService.getPageContent(pageContract.key);
 
         return pageContent;

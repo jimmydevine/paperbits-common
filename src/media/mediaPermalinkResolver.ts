@@ -13,13 +13,18 @@ export class MediaPermalinkResolver implements IPermalinkResolver {
             throw new Error(`Parameter "mediaKey" not specified.`);
         }
 
-        const contentItem = await this.mediaService.getMediaByKey(mediaKey);
+        try {
+            const contentItem = await this.mediaService.getMediaByKey(mediaKey);
 
-        if (!contentItem) {
-            console.warn(`Could not find permalink with key ${mediaKey}.`);
-            return null;
+            if (!contentItem) {
+                console.warn(`Could not find permalink with key ${mediaKey}.`);
+                return null;
+            }
+    
+            return contentItem.permalink;
         }
-
-        return contentItem.permalink;
+        catch (error) {
+            return "";
+        }
     }
 }

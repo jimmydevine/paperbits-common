@@ -275,8 +275,8 @@ export class OfflineObjectStorage implements IObjectStorage {
                     for (const filter of query.filters) {
                         let left = Objects.getObjectAt<any>(filter.left, x);
                         let right = filter.right;
-
-                        if (left === undefined && !!right) {
+                        
+                        if (!!right && left === undefined) {
                             meetsCriteria = false;
                             continue;
                         }

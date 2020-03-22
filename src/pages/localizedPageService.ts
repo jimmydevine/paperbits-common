@@ -50,6 +50,10 @@ export class LocalizedPageService implements IPageService {
             ? locales[requestedLocale]
             : locales[currentLocale] || this.copyMetadata(locales[defaultLocale], {});
 
+        if (!pageMetadata) {
+            return null;
+        }
+
         const pageContract: any = {
             key: localizedPageContract.key,
             ...pageMetadata
@@ -133,10 +137,13 @@ export class LocalizedPageService implements IPageService {
         const currentLocale = await this.localeService.getCurrentLocale();
         const searchLocale = requestedLocale || currentLocale;
 
-        const query = Query
-            .from<PageContract>();
-        // .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
-        // .orderBy(`locales/${searchLocale}/title`);
+        let query = Query.from<PageContract>();
+
+        if (pattern || requestedLocale) {
+            query = Query.from<PageContract>()
+                .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
+                .orderBy(`locales/${searchLocale}/title`);
+        }
 
         const result = await this.objectStorage.searchObjects<any>(pagesPath, query);
         const pages = Object.values(result);

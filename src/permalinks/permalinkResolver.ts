@@ -51,7 +51,6 @@ export class PermalinkResolver implements IPermalinkResolver {
     public async getHyperlinkByTargetKey(targetKey: string, locale?: string): Promise<HyperlinkModel> {
         const permalinkResolver = this.permalinkResolvers.find(x => x.canHandleTarget(targetKey));
         const hyperlink = await permalinkResolver.getHyperlinkByTargetKey(targetKey, locale);
-
         return hyperlink;
     }
 

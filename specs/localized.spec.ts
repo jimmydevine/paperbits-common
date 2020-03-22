@@ -391,4 +391,46 @@ describe("Localized page service", async () => {
         assert.isTrue(Object.keys(resultStorageState["pages"]).length === 0);
         assert.isTrue(Object.keys(resultStorageState["files"]).length === 0);
     });
+
+    it("Search pages in specific locale.", async () => {
+        const initialData = {
+            pages: {
+                page1: {
+                    key: "pages/page1",
+                    locales: {
+                        "en-us": {
+                            title: "About",
+                            permalink: "/about",
+                            contentKey: "files/en-us-content"
+                        },
+                        "ru-ru": {
+                            title: "О нас",
+                            permalink: "ru-ru/about",
+                            contentKey: "files/ru-ru-content"
+                        }
+                    }
+                },
+                page2: {
+                    key: "pages/page2",
+                    locales: {
+                        "en-us": {
+                            title: "Home",
+                            permalink: "/",
+                            contentKey: "files/en-us-content"
+                        }
+                    }
+                }
+            }
+        };
+
+        const objectStorage = new MockObjectStorage(initialData);
+        const blockService = new MockBlockService();
+        const localeService = new MockLocaleService();
+
+        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+
+        const pageContracts = await localizedService.search("", "ru-ru");
+        assert.isTrue(pageContracts.length === 1, "Must return only 1 page.");
+        assert.isTrue(pageContracts[0].title === "О нас", "Page metadata is in invalid locale.");
+    });
 });

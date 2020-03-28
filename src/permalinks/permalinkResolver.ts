@@ -38,14 +38,7 @@ export class PermalinkResolver implements IPermalinkResolver {
             console.warn(`Could not find permalink resolver for content item with key "${hyperlinkContract.targetKey}"`);
         }
 
-        hyperlinkModel = new HyperlinkModel();
-        hyperlinkModel.title = "Unset link";
-        hyperlinkModel.target = hyperlinkContract.target;
-        hyperlinkModel.targetKey = null;
-        hyperlinkModel.href = "#";
-        hyperlinkModel.anchor = hyperlinkContract.anchor;
-
-        return hyperlinkModel;
+        return this.getEmptyHyperlink();
     }
 
     public async getHyperlinkByTargetKey(targetKey: string, locale?: string): Promise<HyperlinkModel> {
@@ -53,11 +46,12 @@ export class PermalinkResolver implements IPermalinkResolver {
 
         if (!permalinkResolver) {
             console.warn(`Could not find permalink resolver for content item with key "${targetKey}".`);
-            return null;
+            return this.getEmptyHyperlink();
         }
 
         const hyperlink = await permalinkResolver.getHyperlinkByTargetKey(targetKey, locale);
-        return hyperlink;
+
+        return hyperlink || this.getEmptyHyperlink();
     }
 
     public async getContentByPermalink(permalink: string, locale?: string): Promise<Contract> {
@@ -90,5 +84,15 @@ export class PermalinkResolver implements IPermalinkResolver {
         }
 
         return null;
+    }
+
+    public getEmptyHyperlink(): HyperlinkModel {
+        const hyperlinkModel = new HyperlinkModel();
+        hyperlinkModel.title = "Unset link";
+        hyperlinkModel.target = "_self";
+        hyperlinkModel.targetKey = null;
+        hyperlinkModel.href = "#";
+        hyperlinkModel.anchor = null;
+        return hyperlinkModel;
     }
 }

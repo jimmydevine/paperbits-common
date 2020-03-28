@@ -1,5 +1,5 @@
 import { assert, expect } from "chai";
-import { LocalizedPageService, PageContract } from "../src/pages";
+import { PageService, PageContract } from "../src/pages";
 import { MockObjectStorage } from "./mocks/mockObjectStorage";
 import { MockBlockService } from "./mocks/mockBlockService";
 import { MockLocaleService } from "./mocks/mockLocaleService";
@@ -27,7 +27,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContract: PageContract = {
             key: "pages/page1",
@@ -63,7 +63,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
         const content: Contract = { type: "ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content);
@@ -93,7 +93,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
         const content: Contract = { type: "ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content);
@@ -126,7 +126,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
         const content: Contract = { type: "ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content);
@@ -156,7 +156,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContract: PageContract = {
             key: "pages/page1",
@@ -197,7 +197,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
         const content: Contract = { type: "updated-ru-ru-content" };
 
         await localizedService.updatePageContent("pages/page1", content);
@@ -227,7 +227,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContract1 = await localizedService.getPageByKey("pages/page1");
         assert.isTrue(pageContract1.title === "About", "Page metadata is in invalid locale.");
@@ -262,7 +262,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContract = await localizedService.getPageByKey("pages/page1");
         assert.isTrue(pageContract.title === "О нас", "Page metadata is in invalid locale.");
@@ -302,7 +302,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContent = await localizedService.getPageContent("pages/page1");
         assert.isTrue(pageContent.type === "ru-ru-content", "Page content is in invalid locale.");
@@ -338,7 +338,7 @@ describe("Localized page service", async () => {
         const localeService = new MockLocaleService();
         localeService.setCurrentLocale("ru-ru");
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContent = await localizedService.getPageContent("pages/page1");
         assert.isTrue(pageContent.type === "en-us-content", "Page content is in invalid locale.");
@@ -349,7 +349,7 @@ describe("Localized page service", async () => {
         const objectStorage = new MockObjectStorage(initialData);
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         await localizedService.createPage("/about", "About", "", "");
 
@@ -383,7 +383,7 @@ describe("Localized page service", async () => {
         const objectStorage = new MockObjectStorage(initialData);
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         await localizedService.deletePage({ key: "pages/page1", title: "About" });
 
@@ -427,7 +427,7 @@ describe("Localized page service", async () => {
         const blockService = new MockBlockService();
         const localeService = new MockLocaleService();
 
-        const localizedService = new LocalizedPageService(objectStorage, blockService, localeService);
+        const localizedService = new PageService(objectStorage, blockService, localeService);
 
         const pageContracts = await localizedService.search("", "ru-ru");
         assert.isTrue(pageContracts.length === 1, "Must return only 1 page.");

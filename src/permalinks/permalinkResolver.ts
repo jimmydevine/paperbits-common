@@ -35,7 +35,7 @@ export class PermalinkResolver implements IPermalinkResolver {
             }
         }
         else {
-            console.warn(`Could not find permalink resolver for target key "${hyperlinkContract.targetKey}"`);
+            console.warn(`Could not find permalink resolver for content item with key "${hyperlinkContract.targetKey}"`);
         }
 
         hyperlinkModel = new HyperlinkModel();
@@ -50,6 +50,12 @@ export class PermalinkResolver implements IPermalinkResolver {
 
     public async getHyperlinkByTargetKey(targetKey: string, locale?: string): Promise<HyperlinkModel> {
         const permalinkResolver = this.permalinkResolvers.find(x => x.canHandleTarget(targetKey));
+
+        if (!permalinkResolver) {
+            console.warn(`Could not find permalink resolver for content item with key "${targetKey}".`);
+            return null;
+        }
+
         const hyperlink = await permalinkResolver.getHyperlinkByTargetKey(targetKey, locale);
         return hyperlink;
     }

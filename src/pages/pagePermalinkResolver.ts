@@ -33,7 +33,8 @@ export class PagePermalinkResolver implements IPermalinkResolver {
             pageContract = await this.pageService.getPageByKey(targetKey, defaultLocale);
 
             if (!pageContract) {
-                throw new Error(`Could not find permalink with key ${targetKey}.`);
+                console.warn(`Could not find content item with key ${targetKey}.`);
+                return "";
             }
         }
         else if (locale && locale !== defaultLocale) {

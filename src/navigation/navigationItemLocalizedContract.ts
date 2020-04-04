@@ -3,7 +3,7 @@
 /**
  * Data structure describing a navigation items, e.g. menus.
  */
-export interface NavigationItemContract extends NavigationItemMetadata{
+export interface NavigationItemLocalizedContract  {
     /**
      * Own key.
      */
@@ -17,5 +17,15 @@ export interface NavigationItemContract extends NavigationItemMetadata{
     /**
      * Child navigation items.
      */
-    navigationItems?: NavigationItemContract[];
+    navigationItems?: NavigationItemLocalizedContract[];
+
+    /**
+     * Navigation item locales.
+     */
+    locales: {
+        /**
+         * e.g. "en-us".
+         */
+        [locale: string]: NavigationItemMetadata;
+    };
 }

@@ -7,7 +7,7 @@ export interface LayoutLocalizedContract {
     key: string;
 
     /**
-     * Page locales.
+     * Layout locales.
      */
     locales: {
         /**

@@ -5,16 +5,16 @@ export interface INavigationService {
      * Return navigation item by key
      * @param navigationItemKey
      */
-    getNavigationItem(navigationItemKey: string): Promise<NavigationItemContract>;
+    getNavigationItemByKey(navigationItemKey: string, locale?: string): Promise<NavigationItemContract>;
 
     /**
      * Returns top-level navigation items.
      */
-    getNavigationItems(): Promise<NavigationItemContract[]>;
+    getNavigationItems(locale?: string): Promise<NavigationItemContract[]>;
 
     /**
      * Updates multple navigation items.
      * @param navigationItems Array of navigation items.
      */
-    updateNavigation(navigationItems: NavigationItemContract[]): Promise<void>;
+    updateNavigation(navigationItems: NavigationItemContract[], locale?: string): Promise<void>;
 }

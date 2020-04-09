@@ -15,6 +15,11 @@
     public targetKey?: string;
 
     /**
+     * Target window.
+     */
+    public target?: string;
+
+    /**
      * Target URL.
      */
     public targetUrl?: string;

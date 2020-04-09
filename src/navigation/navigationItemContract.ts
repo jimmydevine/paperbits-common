@@ -18,6 +18,11 @@ export interface NavigationItemContract {
     targetKey?: string;
 
     /**
+     * Target window.
+     */
+    target?: string;
+
+    /**
      * Child navigation items.
      */
     navigationItems?: NavigationItemContract[];

@@ -31,7 +31,10 @@ export interface View {
      */
     close?(): void;
 
-    lastFocusedElement?: HTMLElement;
+    /**
+     * Reference to an element that should receive focus when this view gets closed.
+     */
+    returnFocusTo?: HTMLElement;
 
     hitTest?(element: HTMLElement): boolean;
 }

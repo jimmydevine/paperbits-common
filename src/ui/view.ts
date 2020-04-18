@@ -9,7 +9,7 @@ export interface View {
     /**
      * Definition of a UI component behind this view.
      */
-    component: IComponent;
+    component?: IComponent;
 
     /**
      * Allowed values: "vertically", "horizontally".
@@ -20,4 +20,18 @@ export interface View {
      * Help text.
      */
     helpText?: string;
+
+    /**
+     * Host element.
+     */
+    element?: HTMLElement;
+
+    /**
+     * Requests closing the view.
+     */
+    close?(): void;
+
+    lastFocusedElement?: HTMLElement;
+
+    hitTest?(element: HTMLElement): boolean;
 }

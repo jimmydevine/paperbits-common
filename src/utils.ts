@@ -334,3 +334,12 @@ export function matchUrl(urlPath: string, urlTemplate: string): { index: number,
 
     return tokens;
 }
+
+export function closest(node: Node, predicate: (node: Node) => boolean): Node {
+    do {
+        if (predicate(node)) {
+            return node;
+        }
+    }
+    while (node = node && node.parentNode);
+}

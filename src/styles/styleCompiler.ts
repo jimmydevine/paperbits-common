@@ -1,6 +1,6 @@
 import { LocalStyles, StatesContract, VariationContract } from "./styleContract";
 import { StyleModel } from "./styleModel";
-import { Style, StyleSheet, StyleManager } from "./";
+import {Style, StyleSheet, StyleManager, FontFace} from "./";
 
 
 /**
@@ -43,6 +43,11 @@ export interface StyleCompiler {
      * Returns compiled font styles.
      */
     getFontsStylesCss(): Promise<string>;
+
+    /**
+     * Returns an array of icon font faces
+     */
+    getIconFontFaces(): Promise<FontFace[]>;
 
     /**
      * Converts states style contract into style.

@@ -177,7 +177,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         await this.initialize();
 
         const clonedChanges = <any>Objects.clone(this.changesObject);
-        const changesAt = Objects.getObjectAt(path, clonedChanges);
+        const changesAt = Objects.getObjectAt<T>(path, clonedChanges);
 
         if (changesAt === null) {
             /*
@@ -202,7 +202,7 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         if (changesAt) {
             /* If there are changes at the same path, apply them to search result */
-            Objects.mergeDeep(result, changesAt);
+            return changesAt;
         }
 
         return result;
@@ -450,11 +450,13 @@ export class OfflineObjectStorage implements IObjectStorage {
         return resultObject;
     }
 
-    public hasUnsavedChanges(): boolean {
+    public async hasUnsavedChanges(): Promise<boolean> {
+        await this.initialize();
         return Object.keys(this.changesObject).length > 0;
     }
 
-    public hasUnsavedChangesAt(key: string): boolean {
+    public async hasUnsavedChangesAt(key: string): Promise<boolean> {
+        await this.initialize();
         return !!Objects.getObjectAt(key, this.changesObject);
     }
 

@@ -1,8 +1,6 @@
 ﻿import { ILocalCache } from "./ILocalCache";
 
 export class LocalStorageCache implements ILocalCache {
-    constructor(private readonly storageKey: string) { }
-
     public async getKeys(): Promise<string[]> {
         return Object.keys(localStorage);
     }

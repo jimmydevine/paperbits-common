@@ -16,10 +16,11 @@
     },
     "dependencies": {
         "deepmerge": "^4.2.2",
+        "dexie": "^3.0.1",
         "domino": "^2.1.4",
+        "html2plaintext": "^2.1.2",
         "immutable": "^3.8.2",
         "inversify": "^5.0.1",
-        "html2plaintext": "^2.1.2",
         "knockout": "^3.5.1",
         "lity": "^2.4.0",
         "lodash": "^4.17.15",

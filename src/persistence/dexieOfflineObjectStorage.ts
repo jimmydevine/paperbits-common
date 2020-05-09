@@ -1,17 +1,67 @@
 import * as Objects from "../objects";
 import * as _ from "lodash";
-import { Bag } from "./../bag";
-import { IObjectStorage, Query, Operator, OrderDirection } from "../persistence";
+import { Bag } from "../bag";
+import { IObjectStorage, Query, Operator, OrderDirection } from ".";
 import { IObjectStorageMiddleware } from "./IObjectStorageMiddleware";
 import { EventManager } from "../events";
-import { DexieOfflineDatabase } from "./dexieOfflineObjectStorage";
+import Dexie from "dexie";
 
 interface HistoryRecord {
     do: () => void;
     undo: () => void;
 }
 
-export class OfflineObjectStorage implements IObjectStorage {
+interface IContact {
+    id?: number;
+    first: string;
+    last: string;
+}
+
+export class DexieOfflineDatabase extends Dexie {
+    // Declare implicit table properties.
+    // (just to inform Typescript. Instanciated by Dexie in stores() method)
+    private contacts: Dexie.Table<any, string>; // number = type of the primkey
+    // ...other tables goes here...
+
+    constructor() {
+        super("paperbits");
+        this.version(1).stores({
+            contacts: "key, first, last, address.street",
+            // ...other tables goes here...
+        });
+        // The following line is needed if your typescript
+        // is compiled using babel instead of tsc:
+        this.contacts = this.table("contacts");
+    }
+
+    public async load(): Promise<void> {
+        // this.contacts.put({
+        //     key: "person1",
+        //     first: "First name",
+        //     last: "Last name",
+        //     address: {
+        //         street: "Douglas Ave SE"
+        //     }
+        // });
+
+        const result = await this.contacts.filter((friend) => {
+            return friend.address.street.toLowerCase().contains("ave");
+        })
+        .toArray();
+
+        // .where("address.street")
+        // .startsWith("Doug")
+        // .toArray();
+
+        console.log(result);
+    }
+
+
+
+}
+
+export class DexieOfflineObjectStorage implements IObjectStorage {
+
     private underlyingStorage: IObjectStorage;      // for storage
     private readonly stateObject: Object;
     private readonly changesObject: Object;
@@ -36,10 +86,6 @@ export class OfflineObjectStorage implements IObjectStorage {
             this.eventManager.addEventListener("onUndo", () => this.undo());
             this.eventManager.addEventListener("onRedo", () => this.redo());
         }
-
-
-        const a = new DexieOfflineDatabase();
-        a.load();
     }
 
     public canUndo(): boolean {

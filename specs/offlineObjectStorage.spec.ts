@@ -138,16 +138,10 @@ describe("Offline object storage", async () => {
         const obs = new OfflineObjectStorage(memoryCache);
         obs.registerUnderlyingStorage(underlyingStorage);
         obs.isOnline = true;
-        const changesObject: any = obs["changesObject"];
-        const stateObject: any = obs["stateObject"];
 
         await obs.deleteObject("employees/employee1");
 
         const getObjectResult = await obs.getObject<any>("employees/employee1");
-
-
         expect(getObjectResult).equals(undefined);
-
-        
     });
 });

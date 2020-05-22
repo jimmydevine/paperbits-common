@@ -2,6 +2,7 @@ import { StylePluginConfig } from "./stylePluginConfig";
 import { BreakpointValues } from "./breakpoints";
 import { LocalStyles } from "./styleContract";
 import * as Objects from "../objects";
+import * as Utils from "../utils";
 
 
 export class StyleHelper {
@@ -42,7 +43,7 @@ export class StyleHelper {
 
                 const breakpoint = Utils.getClosestBreakpoint(pluginConfig, viewport);
             */
-            
+
             const breakpoint = viewport;
 
             return <StylePluginConfig>pluginConfig[breakpoint];
@@ -80,6 +81,10 @@ export class StyleHelper {
 
         instance[pluginName] = plugin;
         localStyles.instance = instance;
+
+        if (!instance.key) {
+            instance.key = Utils.randomClassName();
+        }
 
         Objects.cleanupObject(localStyles, true, true);
     }

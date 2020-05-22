@@ -28,10 +28,10 @@ export interface Breakpoints<T = any> {
     xl?: T;
 }
 
-export const BreakpointValues = {
-    xs: 0,
-    sm: 576,
-    md: 768,
-    lg: 992,
-    xl: 1200
-};
+export enum BreakpointValues {
+    xs = 0,
+    sm = 576,
+    md = 768,
+    lg = 992,
+    xl = 1200
+}

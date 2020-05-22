@@ -1,7 +1,7 @@
 import { StylePluginConfig } from "./stylePluginConfig";
 import { BreakpointValues } from "./breakpoints";
 import { LocalStyles } from "./styleContract";
-import * as Utils from "../utils";
+import * as Objects from "../objects";
 
 
 export class StyleHelper {
@@ -35,8 +35,16 @@ export class StyleHelper {
         const isResponsive = this.isResponsive(pluginConfig);
 
         if (isResponsive) {
-            /* if viewport not specified for requested viewport take closest lower viewport */
-            const breakpoint = Utils.getClosestBreakpoint(pluginConfig, viewport);
+            /* 
+                If viewport not specified for requested viewport take closest lower viewport.
+                We can uncomment this when we'll be able to collapse breakpoints for child properties with same values.
+                For example: { size: { md: { width: 100 }, xs: { width: 100 } } }
+
+                const breakpoint = Utils.getClosestBreakpoint(pluginConfig, viewport);
+            */
+            
+            const breakpoint = viewport;
+
             return <StylePluginConfig>pluginConfig[breakpoint];
         }
         else {
@@ -44,6 +52,13 @@ export class StyleHelper {
         }
     }
 
+    /**
+     * Updates local styles configuration depending on specified viewport. If viewport not specified, the style gets applied to all viewports.
+     * @param localStyles Local styles object.
+     * @param pluginName Name of the style plugin, e.g. "background".
+     * @param pluginConfig Style plugin configuration object.
+     * @param viewport Requested viewport. If viewport not specified, the style gets applied to all viewports.
+     */
     public static setPluginConfig(localStyles: LocalStyles, pluginName: string, pluginConfig: StylePluginConfig, viewport?: string): void {
         if (!localStyles) {
             throw new Error(`Parameter "localStyles" not specified.`);
@@ -65,5 +80,7 @@ export class StyleHelper {
 
         instance[pluginName] = plugin;
         localStyles.instance = instance;
+
+        Objects.cleanupObject(localStyles, true, true);
     }
 }

@@ -1,10 +1,10 @@
 import { OfflineObjectStorage } from "../src/persistence";
-import * as Objects from "../src/objects";
 import { assert, expect } from "chai";
 import { MemoryCache } from "../src/caching";
+import { MockObjectStorage } from "./mocks/mockObjectStorage";
 
 
-const initialData = {
+const initialData1 = {
     firstName: "John",
     lastName: "Doe",
     address: {
@@ -14,36 +14,26 @@ const initialData = {
     roles: ["guest", "developer"]
 };
 
-class MockStorage {
-    private data: any = {
-        employees: {
-            employee1: {
-                key: "employees/employee1",
-                firstName: "John"
-            },
-            employee2: {
-                key: "employees/employee1",
-                firstName: "Janne"
-            }
+const initialData2: any = {
+    employees: {
+        employee1: {
+            key: "employees/employee1",
+            firstName: "John"
         },
-        files: {
-            file1: {
-                key: "files/file1",
-            },
-            file2: {
-                key: "files/file1",
-            }
+        employee2: {
+            key: "employees/employee1",
+            firstName: "Janne"
         }
-    };
-
-    public searchObjects(key: string): any {
-        return Objects.getObjectAt(key, this.data);
+    },
+    files: {
+        file1: {
+            key: "files/file1",
+        },
+        file2: {
+            key: "files/file1",
+        }
     }
-
-    public async getObject<T>(path: string): Promise<T> {
-        return Objects.getObjectAt(path, Objects.clone(this.data));
-    }
-}
+};
 
 describe("Offline object storage", async () => {
     it("Can correctly reflect the state.", async () => {
@@ -51,7 +41,7 @@ describe("Offline object storage", async () => {
         const obs = new OfflineObjectStorage(memoryCache);
         const changesObject: any = obs["changesObject"];
         const stateObject: any = obs["stateObject"];
-        Object.assign(stateObject, initialData); // assigning initial state
+        Object.assign(stateObject, initialData1); // assigning initial state
 
         /* Trying to update object
            - Changes object at specified path should reflect the same object as state;
@@ -86,7 +76,7 @@ describe("Offline object storage", async () => {
         const changesObject: any = obs["changesObject"];
         const stateObject: any = obs["stateObject"];
 
-        Object.assign(stateObject, initialData); // assigning initial state
+        Object.assign(stateObject, initialData1); // assigning initial state
         expect(stateObject.address.streetNumber).equal(2000);
         expect(changesObject.address, "When no changes has been made yet, changesObject should be empty").equals(undefined);
 
@@ -98,11 +88,43 @@ describe("Offline object storage", async () => {
         expect(changesObject.address, "Undo should rollback changesObject as well").equals(undefined);
     });
 
+    it("Can get object taking changes into account.", async () => {
+        /**
+         * Scenario 1. Check if object exists locally. If yes, return it (without querying remote).
+         * Scenario 2. Check if object deleted locally. If yes, return null.
+         * Scenario 3. Query remote. If returned, cache locally.
+         */
+
+        const memoryCache = new MemoryCache();
+        const remoteObjectStorage: MockObjectStorage = new MockObjectStorage(initialData2);
+        const obs = new OfflineObjectStorage(memoryCache);
+        obs.setRemoteObjectStorage(remoteObjectStorage);
+        obs.isOnline = true;
+
+        /* First query: employee1 is not cached yet, so remote storage gets called. */
+        const result1 = await obs.getObject("employees/employee1");
+        assert.isNotNull(result1); 
+        expect(remoteObjectStorage.requestCount).equals(1);
+
+        /* Second query: employee1 already cached, so remote storage doesn't get called. */
+        const result2 = await obs.getObject("employees/employee1");
+        assert.isNotNull(result2); console.log(result2);
+        expect(remoteObjectStorage.requestCount).equals(1); // number of remote requests still 1.
+
+        /* Deleting employee1 locally */
+        await obs.deleteObject("employees/employee1");
+
+        /* Third query: employee1 deleted locally, no need to call remote. */
+        const result3 = await obs.getObject("employees/employee1");
+        assert.isUndefined(result3); // must be undefined
+        expect(remoteObjectStorage.requestCount).equals(1); // number of remote requests still 1.
+    });
+
     it("Can do search taking changes into account.", async () => {
         const memoryCache = new MemoryCache();
-        const underlyingStorage: any = new MockStorage();
+        const remoteObjectStorage: any = new MockObjectStorage();
         const obs = new OfflineObjectStorage(memoryCache);
-        obs.registerUnderlyingStorage(underlyingStorage);
+        obs.setRemoteObjectStorage(remoteObjectStorage);
         obs.isOnline = true;
         const changesObject: any = obs["changesObject"];
         const stateObject: any = obs["stateObject"];
@@ -114,13 +136,18 @@ describe("Offline object storage", async () => {
             lastName: "Doe"
         });
 
-        const searchResult1 = await obs.searchObjects<any>("employees");
+        const pageOfResults1 = await obs.searchObjects<any>("employees");
+        const searchResult1 = pageOfResults1.value;
+
+        console.log(pageOfResults1);
 
         assert.isUndefined(searchResult1.employee1);
         assert.isNotNull(searchResult1.employee2);
         expect(searchResult1.employee2.lastName).equals("Doe");
 
-        const searchResult2 = await obs.searchObjects<any>("files");
+        const pageOfResults2 = await obs.searchObjects<any>("files");
+        const searchResult2 = pageOfResults2.value;
+        console.log(pageOfResults2);
         assert.isNotNull(searchResult2.file1);
         assert.isNotNull(searchResult2.file2);
         assert.isUndefined(searchResult2.employees); // Ensure not previous results mixed in.
@@ -134,9 +161,9 @@ describe("Offline object storage", async () => {
 
     it("Performs getObject taking changes into account.", async () => {
         const memoryCache = new MemoryCache();
-        const underlyingStorage: any = new MockStorage();
+        const remoteObjectStorage: any = new MockObjectStorage();
         const obs = new OfflineObjectStorage(memoryCache);
-        obs.registerUnderlyingStorage(underlyingStorage);
+        obs.setRemoteObjectStorage(remoteObjectStorage);
         obs.isOnline = true;
 
         await obs.deleteObject("employees/employee1");

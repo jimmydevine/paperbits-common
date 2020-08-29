@@ -9,13 +9,14 @@
 
 import * as _ from "lodash";
 import * as Objects from "../../src/objects";
-import { IObjectStorage, Query, Operator, OrderDirection } from "../../src/persistence";
-import { Bag } from "../../src";
+import { IObjectStorage, Query, Operator, OrderDirection, Page } from "../../src/persistence";
 
 
 export class MockObjectStorage implements IObjectStorage {
     protected storageDataObject: Object;
     private splitter: string = "/";
+
+    public requestCount: number = 0;
 
     constructor(initialData: Object = {}) {
         this.storageDataObject = initialData;
@@ -26,46 +27,57 @@ export class MockObjectStorage implements IObjectStorage {
     }
 
     public async addObject(path: string, dataObject: Object): Promise<void> {
-        if (path) {
-            const pathParts = path.split(this.splitter);
-            const mainNode = pathParts[0];
+        if (!path) {
+            throw new Error(`Parameter "path" not specified.`);
+        }
 
-            if (pathParts.length === 1 || (pathParts.length === 2 && !pathParts[1])) {
-                this.storageDataObject[mainNode] = dataObject;
-            }
-            else {
-                if (!_.has(this.storageDataObject, mainNode)) {
-                    this.storageDataObject[mainNode] = {};
-                }
-                this.storageDataObject[mainNode][pathParts[1]] = dataObject;
-            }
+        const pathParts = path.split(this.splitter);
+        const mainNode = pathParts[0];
+
+        if (pathParts.length === 1 || (pathParts.length === 2 && !pathParts[1])) {
+            this.storageDataObject[mainNode] = dataObject;
         }
         else {
-            Object.keys(dataObject).forEach(prop => {
-                const obj = dataObject[prop];
-                const pathParts = prop.split(this.splitter);
-                const mainNode = pathParts[0];
-
-                if (pathParts.length === 1 || (pathParts.length === 2 && !pathParts[1])) {
-                    this.storageDataObject[mainNode] = obj;
-                }
-                else {
-                    if (!_.has(this.storageDataObject, mainNode)) {
-                        this.storageDataObject[mainNode] = {};
-                    }
-                    this.storageDataObject[mainNode][pathParts[1]] = obj;
-                }
-            });
+            if (!_.has(this.storageDataObject, mainNode)) {
+                this.storageDataObject[mainNode] = {};
+            }
+            this.storageDataObject[mainNode][pathParts[1]] = dataObject;
         }
+
+        // else {
+        //     Object.keys(dataObject).forEach(prop => {
+        //         const obj = dataObject[prop];
+        //         const pathParts = prop.split(this.splitter);
+        //         const mainNode = pathParts[0];
+
+        //         if (pathParts.length === 1 || (pathParts.length === 2 && !pathParts[1])) {
+        //             this.storageDataObject[mainNode] = obj;
+        //         }
+        //         else {
+        //             if (!_.has(this.storageDataObject, mainNode)) {
+        //                 this.storageDataObject[mainNode] = {};
+        //             }
+        //             this.storageDataObject[mainNode][pathParts[1]] = obj;
+        //         }
+        //     });
+        // }
     }
 
     public async getObject<T>(path: string): Promise<T> {
+        if (!path) {
+            throw new Error(`Parameter "path" not specified.`);
+        }
+
+        this.requestCount++;
+
         const data = await this.getData();
 
         return Objects.getObjectAt(path, Objects.clone(data));
     }
 
     public async deleteObject(path: string): Promise<void> {
+        this.requestCount++;
+
         if (!path) {
             return;
         }
@@ -78,20 +90,27 @@ export class MockObjectStorage implements IObjectStorage {
             throw new Error(`Parameter "path" not specified.`);
         }
 
+        this.requestCount++;
+
         const clone: any = Objects.clone(dataObject);
         Objects.setValue(path, this.storageDataObject, clone);
         Objects.cleanupObject(clone); // Ensure all "undefined" are cleaned up
     }
 
-    public async searchObjects<T>(path: string, query: Query<T>): Promise<Bag<T>> {
-        const searchResultObject: Bag<T> = {};
+    public async searchObjects<T>(path: string, query: Query<T>): Promise<Page<T>> {
+        const searchResultObject: any = {};
         const data = await this.getData();
 
         if (!data) {
-            return searchResultObject;
+            return { value: searchResultObject };
         }
 
         const searchObj = Objects.getObjectAt(path, data);
+
+        if (!searchObj) {
+            return { value: searchResultObject };
+        }
+
         let collection = Object.values(searchObj);
 
         if (query) {
@@ -159,6 +178,11 @@ export class MockObjectStorage implements IObjectStorage {
                     return 0;
                 });
             }
+
+            const skip = query.skipping || 0;
+            const take = query.taking || collection.length;
+
+            collection = collection.slice(skip, take);
         }
 
         collection.forEach(item => {
@@ -169,7 +193,7 @@ export class MockObjectStorage implements IObjectStorage {
             Objects.cleanupObject(item); // Ensure all "undefined" are cleaned up
         });
 
-        return searchResultObject;
+        return { value: searchResultObject };
     }
 
     public async saveChanges(delta: Object): Promise<void> {

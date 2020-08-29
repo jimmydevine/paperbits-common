@@ -13,7 +13,7 @@ interface HistoryRecord {
 }
 
 export class OfflineObjectStorage implements IObjectStorage {
-    private underlyingStorage: IObjectStorage;      // for storage
+    private remoteObjectStorage: IObjectStorage;      // for storage
     private readonly stateObject: Object;
     private readonly changesObject: Object;
     private readonly past: HistoryRecord[];
@@ -31,7 +31,7 @@ export class OfflineObjectStorage implements IObjectStorage {
     ) {
         this.stateObject = {};
         this.changesObject = {};
-        this.underlyingStorage = null;
+        this.remoteObjectStorage = null;
         this.isOnline = true;
         this.autosave = false;
         this.middlewares = [];
@@ -70,8 +70,8 @@ export class OfflineObjectStorage implements IObjectStorage {
         return this.future.length > 0;
     }
 
-    public registerUnderlyingStorage(underlyingStorage: IObjectStorage): void {
-        this.underlyingStorage = underlyingStorage;
+    public setRemoteObjectStorage(underlyingStorage: IObjectStorage): void {
+        this.remoteObjectStorage = underlyingStorage;
     }
 
     public registerMiddleware(middleware: IObjectStorageMiddleware): void {
@@ -176,36 +176,36 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         await this.initialize();
 
-        const clonedChanges = <any>Objects.clone(this.changesObject);
-        const changesAt = Objects.getObjectAt<T>(path, clonedChanges);
+        /* 1. Check if object exists locally. If yes, return it (without querying remote). */
+        let locallyCachedObject = Objects.getObjectAt<T>(path, this.stateObject);
+
+        if (locallyCachedObject) {
+            return Objects.clone(locallyCachedObject); // Cloning to loose references.
+        }
+
+        /* 2. Check if object deleted locally. If yes, return null. */
+        const changesAt = Objects.getObjectAt<T>(path, this.changesObject);
+
+        console.log(changesAt);
 
         if (changesAt === null) {
             /*
                Note: "null" (not undefined) in changesObject specifically means that this object
-               has been deleted locally (but not yet saved to underlying). Hence, no need to check
+               has been deleted locally (but not yet saved to underlying storage). Hence, no need to check
                neither local nor underlying storage.
             */
-
             return undefined;
         }
 
-        let result = Objects.getObjectAt<T>(path, this.stateObject);
+        /* 3. Query remote. If returned, cache locally. */
+        const remoteObjectStorageResult = await this.remoteObjectStorage.getObject<T>(path);
 
-        if (!result && this.isOnline) {
-            const underlyingStorageResult = await this.underlyingStorage.getObject<T>(path);
-
-            if (underlyingStorageResult) {
-                result = Objects.clone(underlyingStorageResult);
-                Objects.setValue(path, this.stateObject, result);
-            }
+        if (!!remoteObjectStorageResult) { // Adding to local cache.
+            locallyCachedObject = Objects.clone(remoteObjectStorageResult);
+            Objects.setValue(path, this.stateObject, locallyCachedObject);
         }
 
-        if (changesAt) {
-            /* If there are changes at the same path, apply them to search result */
-            return changesAt;
-        }
-
-        return result;
+        return remoteObjectStorageResult;
     }
 
     public async deleteObject(path: string): Promise<void> {
@@ -418,7 +418,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         return searchResultObject;
     }
 
-    public async searchObjects<T>(path: string, query?: Query<T>): Promise<Page<Bag<T>>> {
+    public async searchObjects<T>(path: string, query?: Query<T>): Promise<Page<T>> {
         if (!path) {
             throw new Error(`Parameter "path" not specified.`);
         }
@@ -428,11 +428,11 @@ export class OfflineObjectStorage implements IObjectStorage {
         const resultObject = await this.searchLocalState(path, query);
 
         if (this.isOnline) {
-            const pageOfObjects = await this.underlyingStorage.searchObjects<Bag<T>>(path, query);
+            const pageOfObjects = await this.remoteObjectStorage.searchObjects<Bag<T>>(path, query);
             const searchResultObject = pageOfObjects.value;
 
             if (!searchResultObject || Object.keys(searchResultObject).length === 0) {
-                return { value: resultObject };
+                return <any>{ value: resultObject };
             }
 
             const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
@@ -448,7 +448,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.mergeDeep(resultObject, searchResultObject, true);
         }
 
-        return { value: resultObject };
+        return <any>{ value: resultObject };
     }
 
     public async hasUnsavedChanges(): Promise<boolean> {
@@ -475,7 +475,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             return;
         }
 
-        await this.underlyingStorage.saveChanges(this.changesObject);
+        await this.remoteObjectStorage.saveChanges(this.changesObject);
         entities.forEach(key => delete this.changesObject[key]);
 
         this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
@@ -484,8 +484,8 @@ export class OfflineObjectStorage implements IObjectStorage {
     }
 
     public async loadData(): Promise<object> {
-        if (this.underlyingStorage.loadData) {
-            const loadedData = await this.underlyingStorage.loadData();
+        if (this.remoteObjectStorage.loadData) {
+            const loadedData = await this.remoteObjectStorage.loadData();
 
             if (loadedData) {
                 await this.discardChanges();

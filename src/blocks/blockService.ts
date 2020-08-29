@@ -41,7 +41,9 @@ export class BlockService implements IBlockService {
             if (pattern.length > 0) {
                 query.where("title", Operator.contains, pattern).orderBy("title");
             }
-            result = await this.objectStorage.searchObjects<BlockContract>(blockPath, query);
+
+            const pageOfObjects = await this.objectStorage.searchObjects<Bag<BlockContract>>(blockPath, query);
+            result = pageOfObjects.value;
         }
         else {
             const data = await this.loadBlockSnippets();
@@ -106,7 +108,7 @@ export class BlockService implements IBlockService {
         }
 
         const data = await this.loadBlockSnippets();
-        
+
         if (!data) {
             return null;
         }
@@ -138,7 +140,7 @@ export class BlockService implements IBlockService {
             });
 
             this.blocksData = <any>response.toObject();
-        } 
+        }
         catch (error) {
             console.error("Load blocks error: ", error);
         }

@@ -62,3 +62,9 @@ export class Query<T> {
         return new Query<T>();
     }
 }
+
+export interface Page<T> {
+    value: T;
+    prevPage?: Query<T>;
+    nextPage?: Query<T>;
+}

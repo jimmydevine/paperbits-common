@@ -23,7 +23,8 @@ export class UrlService implements IUrlService {
             .where("title", Operator.contains, pattern)
             .orderBy("title");
 
-        const result = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
+        const result = pageOfObjects;
 
         return Object.values(result);
     }

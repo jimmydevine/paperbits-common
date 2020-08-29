@@ -19,7 +19,8 @@ export class MediaService implements IMediaService {
             .from<MediaContract>()
             .where("permalink", Operator.equals, permalink);
 
-        const result = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);
+        const result = pageOfObjects.value;
         const uploads = Object.values(result);
 
         return uploads.length > 0 ? uploads[0] : null;
@@ -68,8 +69,10 @@ export class MediaService implements IMediaService {
             query = query.where("mimeType", Operator.contains, mimeType);
         }
 
-        const result = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);
+        const result = pageOfObjects.value;
         const values = [];
+        
         for (const media of Object.values(result)) {
             if (media.blobKey) {
                 const downloadUrl = await this.getDownloadUrlFromBlobKey(media.blobKey);

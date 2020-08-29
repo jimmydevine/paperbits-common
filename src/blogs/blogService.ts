@@ -26,7 +26,8 @@ export class BlogService implements IBlogService {
             .from<BlogPostContract>()
             .where("permalink", Operator.equals, permalink);
 
-        const result = await this.objectStorage.searchObjects<BlogPostContract>(blogPostsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<BlogPostContract>(blogPostsPath, query);
+        const result = pageOfObjects.value;
         const posts = Object.values(result);
 
         return posts.length > 0 ? posts[0] : null;
@@ -42,7 +43,8 @@ export class BlogService implements IBlogService {
             .where("title", Operator.contains, pattern)
             .orderBy("title");
 
-        const result = await this.objectStorage.searchObjects<BlogPostContract>(blogPostsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<Bag<BlogPostContract>>(blogPostsPath, query);
+        const result = pageOfObjects.value;
 
         return Object.values(result);
     }
@@ -54,7 +56,7 @@ export class BlogService implements IBlogService {
         await Promise.all([deleteContentPromise, deleteBlogPostPromise]);
     }
 
-    public async createBlogPost(url: string, title: string, description: string, keywords): Promise<BlogPostContract> {
+    public async createBlogPost(url: string, title: string, description: string, keywords: string): Promise<BlogPostContract> {
         const identifier = Utils.guid();
         const postKey = `${blogPostsPath}/${identifier}`;
         const contentKey = `${documentsPath}/${identifier}`;

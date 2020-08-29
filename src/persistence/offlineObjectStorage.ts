@@ -2,7 +2,7 @@ import * as Objects from "../objects";
 import * as _ from "lodash";
 import * as Utils from "../utils";
 import { Bag } from "./../bag";
-import { IObjectStorage, Query, Operator, OrderDirection } from "../persistence";
+import { IObjectStorage, Query, Operator, OrderDirection, Page } from "../persistence";
 import { IObjectStorageMiddleware } from "./IObjectStorageMiddleware";
 import { EventManager } from "../events";
 import { ILocalCache } from "../caching";
@@ -418,7 +418,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         return searchResultObject;
     }
 
-    public async searchObjects<T>(path: string, query?: Query<T>): Promise<Bag<T>> {
+    public async searchObjects<T>(path: string, query?: Query<T>): Promise<Page<Bag<T>>> {
         if (!path) {
             throw new Error(`Parameter "path" not specified.`);
         }
@@ -428,10 +428,11 @@ export class OfflineObjectStorage implements IObjectStorage {
         const resultObject = await this.searchLocalState(path, query);
 
         if (this.isOnline) {
-            const searchResultObject = await this.underlyingStorage.searchObjects<Bag<T>>(path, query);
+            const pageOfObjects = await this.underlyingStorage.searchObjects<Bag<T>>(path, query);
+            const searchResultObject = pageOfObjects.value;
 
             if (!searchResultObject || Object.keys(searchResultObject).length === 0) {
-                return resultObject;
+                return { value: resultObject };
             }
 
             const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
@@ -447,7 +448,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.mergeDeep(resultObject, searchResultObject, true);
         }
 
-        return resultObject;
+        return { value: resultObject };
     }
 
     public async hasUnsavedChanges(): Promise<boolean> {

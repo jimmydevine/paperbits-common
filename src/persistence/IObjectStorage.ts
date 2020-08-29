@@ -1,5 +1,4 @@
-import { Query } from "../persistence/query";
-import { Bag } from "../bag";
+import { Query, Page } from "../persistence/query";
 
 export interface IObjectStorage {
     /**
@@ -31,7 +30,7 @@ export interface IObjectStorage {
      */
     updateObject<T>(key: string, dataObject: T): Promise<void>;
 
-    searchObjects<T>(key: string, query?: Query<T>): Promise<Bag<T>>;
+    searchObjects<T>(key: string, query?: Query<T>): Promise<Page<T>>;
 
     saveChanges?(delta: Object): Promise<void>;
 

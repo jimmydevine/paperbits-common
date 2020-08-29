@@ -4,7 +4,7 @@ import * as Constants from "../constants";
 import { LayoutContract } from "../layouts/layoutContract";
 import { IObjectStorage, Query, Operator } from "../persistence";
 import { ILayoutService, LayoutMetadata, LayoutLocalizedContract } from "./";
-import { Contract } from "..";
+import { Contract, Bag } from "..";
 import { layoutTemplate } from "./layoutTemplate";
 import { ILocaleService } from "../localization";
 
@@ -87,7 +87,8 @@ export class LayoutService implements ILayoutService {
                 .orderBy(`locales/${searchLocale}/title`);
         }
 
-        const result = await this.objectStorage.searchObjects<any>(this.layoutsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<Bag<LayoutLocalizedContract>>(this.layoutsPath, query);
+        const result = pageOfObjects.value;
         const layouts = Object.values(result);
 
         return layouts.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
@@ -175,7 +176,8 @@ export class LayoutService implements ILayoutService {
             .from<LayoutContract>()
             .where(`locales/${defaultLocale}/permalinkTemplate`, Operator.equals, permalinkTemplate);
 
-        const result = await this.objectStorage.searchObjects<LayoutContract>(this.layoutsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<LayoutContract>(this.layoutsPath, query);
+        const result = pageOfObjects.value;
         const layouts = Object.keys(result).map(key => result[key]);
         return layouts.length > 0 ? layouts[0] : null;
     }
@@ -287,7 +289,8 @@ export class LayoutService implements ILayoutService {
         const defaultLocale = await this.localeService.getDefaultLocale();
         const currentLocale = await this.localeService.getCurrentLocale();
 
-        const result = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath);
+        const pageOfObjects = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath);
+        const result = pageOfObjects.value;
         const layouts = Object.keys(result).map(key => result[key]);
 
         if (layouts && layouts.length) {

@@ -5,6 +5,7 @@ import { IObjectStorage, Operator, Query } from "../persistence";
 import { IBlockService } from "../blocks";
 import { Contract } from "../contract";
 import { ILocaleService } from "../localization";
+import { Bag } from "../bag";
 
 const documentsPath = "files";
 const templateBlockKey = "blocks/new-page-template";
@@ -75,7 +76,8 @@ export class PageService implements IPageService {
             .where(permalinkProperty, Operator.equals, permalink);
 
         try {
-            const result = await this.objectStorage.searchObjects<PageLocalizedContract>(this.pagesPath, query);
+            const pageOfObjects = await this.objectStorage.searchObjects<PageLocalizedContract>(this.pagesPath, query);
+            const result = pageOfObjects.value;
 
             if (!result) {
                 return null;
@@ -127,7 +129,8 @@ export class PageService implements IPageService {
         }
 
         try {
-            const result = await this.objectStorage.searchObjects<any>(this.pagesPath, query);
+            const pageOfObject = await this.objectStorage.searchObjects<Bag<PageLocalizedContract>>(this.pagesPath, query);
+            const result = pageOfObject.value;
 
             if (!result) {
                 return [];

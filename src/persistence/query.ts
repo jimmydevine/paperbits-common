@@ -16,8 +16,8 @@ export interface Filter<TLeftOperand, TRightOperand> {
 
 export class Query<T> {
     public filters: Filter<any, any>[] = [];
-    public skipping: number;
-    public taking: number;
+    public skipping: number = 0;
+    public taking: number = 100;
     public selecting: string;
     public orderingBy: string;
     public orderDirection: OrderDirection;
@@ -60,6 +60,39 @@ export class Query<T> {
 
     public static from<T>(): Query<T> {
         return new Query<T>();
+    }
+
+    public getNextPageQuery<T>(): Query<T> {
+        const nextPageQuery = this.copy();
+        nextPageQuery.skipping = this.skipping + this.taking;
+
+        return nextPageQuery;
+    }
+
+    public getPrevPageQuery<T>(): Query<T> {
+        const prevPageQuery = this.copy();
+
+        let skip = this.skipping - this.taking;
+
+        if (skip < 0) {
+            skip = undefined;
+        }
+
+        prevPageQuery.skipping = skip;
+
+        return prevPageQuery;
+    }
+
+    public copy<T>(): Query<T> {
+        const query = new Query<T>();
+        query.filters = this.filters;
+        query.selecting = this.selecting;
+        query.orderingBy = this.orderingBy;
+        query.orderDirection = this.orderDirection;
+        query.taking = this.taking;
+        query.skipping = this.skipping;
+
+        return query;
     }
 }
 

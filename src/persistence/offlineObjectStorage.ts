@@ -12,15 +12,21 @@ interface HistoryRecord {
     undo: () => void;
 }
 
+interface LocalSearchResults<T> {
+    value: Bag<T>;
+    totalCount: number;
+}
+
 export class OfflineObjectStorage implements IObjectStorage {
-    private remoteObjectStorage: IObjectStorage;      // for storage
+    private remoteObjectStorage: IObjectStorage;
+    private initializePromise: Promise<void>;
     private readonly stateObject: Object;
     private readonly changesObject: Object;
     private readonly past: HistoryRecord[];
     private readonly future: HistoryRecord[];
     private readonly middlewares: IObjectStorageMiddleware[];
-    private initializePromise: Promise<void>;
     private readonly changesObjectCacheKey: string = "changesObject";
+    private readonly stateObjectCacheKey: string = "stateObject";
 
     public isOnline: boolean;
     public autosave: boolean;
@@ -54,6 +60,12 @@ export class OfflineObjectStorage implements IObjectStorage {
 
             if (cachedChangesObject) {
                 Object.assign(this.changesObject, cachedChangesObject);
+            }
+
+            const cachedStateObject = await this.changesCache.getItem<Object>(this.stateObjectCacheKey);
+
+            if (cachedStateObject) {
+                Object.assign(this.stateObject, cachedStateObject);
             }
 
             resolve();
@@ -101,6 +113,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(this.changesObject, true);
 
             this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         };
 
         const undoCommand = () => {
@@ -114,6 +127,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(this.changesObject, true);
 
             this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         };
 
         this.do(doCommand, undoCommand);
@@ -151,6 +165,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(this.changesObject);
 
             this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         };
 
         const undoCommand = () => {
@@ -164,6 +179,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(this.changesObject);
 
             this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         };
 
         this.do(doCommand, undoCommand);
@@ -186,8 +202,6 @@ export class OfflineObjectStorage implements IObjectStorage {
         /* 2. Check if object deleted locally. If yes, return null. */
         const changesAt = Objects.getObjectAt<T>(path, this.changesObject);
 
-        console.log(changesAt);
-
         if (changesAt === null) {
             /*
                Note: "null" (not undefined) in changesObject specifically means that this object
@@ -203,6 +217,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         if (!!remoteObjectStorageResult) { // Adding to local cache.
             locallyCachedObject = Objects.clone(remoteObjectStorageResult);
             Objects.setValue(path, this.stateObject, locallyCachedObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         }
 
         return remoteObjectStorageResult;
@@ -229,6 +244,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(this.changesObject);
 
             this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         };
 
         const undoCommand = () => {
@@ -242,6 +258,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(this.changesObject);
 
             this.changesCache.setItem(this.changesObjectCacheKey, this.changesObject);
+            this.changesCache.setItem(this.stateObjectCacheKey, this.stateObject);
         };
 
         this.do(doCommand, undoCommand);
@@ -300,25 +317,14 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
     }
 
-    private async searchLocalState<T>(path: string, query?: Query<T>): Promise<Bag<T>> {
+    private async searchLocalChanges<T>(path: string, query?: Query<T>): Promise<LocalSearchResults<T>> {
         const searchResultObject: Bag<T> = {};
-        const data = this.stateObject;
-
-        if (!data) {
-            return searchResultObject;
-        }
-
-        const searchObj = Objects.getObjectAt(path, data);
+        const searchObj = Objects.getObjectAt(path, this.changesObject);
 
         if (!searchObj) {
-            return searchResultObject;
+            return { value: searchResultObject, totalCount: 0 };
         }
 
-        return this.searchInResult<T>(searchObj, query);
-    }
-
-    private searchInResult<T>(searchObj: unknown, query?: Query<T>): Bag<T> {
-        const searchResultObject: Bag<T> = {};
         let collection = Object.values(searchObj);
 
         if (query) {
@@ -407,7 +413,14 @@ export class OfflineObjectStorage implements IObjectStorage {
             }
         }
 
+        const totalObjects = collection.length;
+        collection = collection.slice(query.skipping, query.skipping + query.taking);
+
         collection.forEach(item => {
+            if (!item.key) {
+                throw new Error(`Searched object doesn't have "key" property.`);
+            }
+
             const segments = item.key.split("/");
             const key = segments[1];
 
@@ -415,7 +428,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             Objects.cleanupObject(item); // Ensure all "undefined" are cleaned up
         });
 
-        return searchResultObject;
+        return { value: searchResultObject, totalCount: totalObjects };
     }
 
     public async searchObjects<T>(path: string, query?: Query<T>): Promise<Page<T>> {
@@ -425,30 +438,88 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         await this.initialize();
 
-        const resultObject = await this.searchLocalState(path, query);
-
-        if (this.isOnline) {
-            const pageOfObjects = await this.remoteObjectStorage.searchObjects<Bag<T>>(path, query);
-            const searchResultObject = pageOfObjects.value;
-
-            if (!searchResultObject || Object.keys(searchResultObject).length === 0) {
-                return <any>{ value: resultObject };
-            }
-
-            const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
-
-            if (changesAt) {
-                /* If there are changes at the same path, apply them to search result */
-                Objects.mergeDeep(searchResultObject, changesAt, true);
-            }
-
-            /* Complement stateObject with new objects from search result, if any */
-            Objects.mergeDeepAt(path, this.stateObject, Objects.clone(searchResultObject), true);
-
-            Objects.mergeDeep(resultObject, searchResultObject, true);
+        if (!query) {
+            query = Query.from<T>();
         }
 
-        return <any>{ value: resultObject };
+        const resultPage: Page<any> = { value: {} };
+
+        /**
+         * 1. Search local changes to see if there are added objects matching search criteria;
+         * 2. Added objects always go to the top of search resuls;
+         * 3. When "skip" goes beyond local result set, we call remote storage to fill search results page (determined by "take");
+         */
+
+        // 1. Find locally added/changed objects
+        const localSearchResults = await this.searchLocalChanges(path, query);
+        const localSearchResultsTotalCount = localSearchResults.totalCount;
+
+        // console.log("Local: " + JSON.stringify(localSearchResults.value)); // GOOD
+
+        // const pageSize = query.taking - query.skipping;
+        // const missingCount = localSearchResultsTotalCount - query.skipping + query.taking;
+
+        if ((query.skipping + query.taking) < localSearchResultsTotalCount) {  // requested page is withing local search result set.
+            resultPage.value = localSearchResults.value;
+            resultPage.nextPage = query.getNextPageQuery();
+            return resultPage;
+        }
+
+        // Try to fill the page with remote result set
+
+        // Adjusting remote query skip
+        let remoteSkip = query.skipping - localSearchResultsTotalCount;
+
+        if (remoteSkip < 0) {
+            remoteSkip = 0;
+        }
+
+        const remoteQuery = query.copy();
+        remoteQuery.skipping = remoteSkip;
+
+        const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<Bag<T>>(path, remoteQuery);
+
+        if (pageOfRemoteSearchResults.nextPage) {
+            resultPage.nextPage = query.getNextPageQuery();
+        }
+
+        const remoteSearchResults = pageOfRemoteSearchResults.value;
+
+        // console.log("Remote: " + JSON.stringify(remoteSearchResults)); // GOOD
+
+
+        const mergedSearchResults = {};
+        Objects.mergeDeep(mergedSearchResults, remoteSearchResults, true);
+        Objects.mergeDeep(mergedSearchResults, localSearchResults.value, true);
+
+        // Object.assign(mergedSearchResults, remoteSearchResults);
+        // Object.assign(mergedSearchResults, localSearchResults.value);
+
+        resultPage.value = mergedSearchResults;
+
+        // console.log("Merged: " + JSON.stringify(mergedSearchResults));
+
+        // if (!remoteSearchResults || Object.keys(remoteSearchResults).length === 0) {
+        //     resultPage.value = <any>remoteSearchResults;
+        //     return resultPage;
+        // }
+
+        // // 2. Apply deleted objects
+        // const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
+
+        // if (changesAt) {
+        //     /* If there are changes at the same path, apply them to search result */
+        //     Objects.mergeDeep(remoteSearchResults, changesAt, true);
+        // }
+
+        // console.log("After merge: " + JSON.stringify(remoteSearchResults));
+
+        // /* Complement stateObject with new objects from search result, if any */
+        // Objects.mergeDeepAt(path, this.stateObject, Objects.clone(remoteSearchResults), true);
+        // Objects.mergeDeep(localSearchResults, remoteSearchResults, true);
+
+
+        return resultPage;
     }
 
     public async hasUnsavedChanges(): Promise<boolean> {

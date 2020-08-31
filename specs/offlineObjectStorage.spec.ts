@@ -1,4 +1,4 @@
-import { OfflineObjectStorage } from "../src/persistence";
+import { OfflineObjectStorage, Query } from "../src/persistence";
 import { assert, expect } from "chai";
 import { MemoryCache } from "../src/caching";
 import { MockObjectStorage } from "./mocks/mockObjectStorage";
@@ -21,7 +21,7 @@ const initialData2: any = {
             firstName: "John"
         },
         employee2: {
-            key: "employees/employee1",
+            key: "employees/employee2",
             firstName: "Janne"
         }
     },
@@ -31,6 +31,29 @@ const initialData2: any = {
         },
         file2: {
             key: "files/file1",
+        }
+    }
+};
+
+const initialData3: any = {
+    employees: {
+        employee1: {
+            key: "employees/employee1",
+            firstName: "Employee 1"
+        },
+        employee2: {
+            key: "employees/employee2",
+            firstName: "Employee 2"
+        }
+        ,
+        employee3: {
+            key: "employees/employee3",
+            firstName: "Employee 3"
+        }
+        ,
+        employee4: {
+            key: "employees/employee4",
+            firstName: "Employee 4"
         }
     }
 };
@@ -103,7 +126,7 @@ describe("Offline object storage", async () => {
 
         /* First query: employee1 is not cached yet, so remote storage gets called. */
         const result1 = await obs.getObject("employees/employee1");
-        assert.isNotNull(result1); 
+        assert.isNotNull(result1);
         expect(remoteObjectStorage.requestCount).equals(1);
 
         /* Second query: employee1 already cached, so remote storage doesn't get called. */
@@ -118,6 +141,39 @@ describe("Offline object storage", async () => {
         const result3 = await obs.getObject("employees/employee1");
         assert.isUndefined(result3); // must be undefined
         expect(remoteObjectStorage.requestCount).equals(1); // number of remote requests still 1.
+    });
+
+    it("SEARCH.", async () => {
+        /**
+         * 1. Take whole page from remote
+         * 2. Apply deleted objects
+         * 3. Apply added object
+         * 4. OPT: if page, not filled and next link present, all next page until page size filled.
+         */
+
+        const memoryCache = new MemoryCache();
+        const remoteObjectStorage: MockObjectStorage = new MockObjectStorage(initialData3);
+        const obs = new OfflineObjectStorage(memoryCache);
+        obs.setRemoteObjectStorage(remoteObjectStorage);
+        obs.isOnline = true;
+
+        const query = Query
+            .from<any>()
+            .skip(0)
+            .take(2);
+
+        await obs.addObject("employees/employeeA", { key: "employees/employeeA", firstName: "Employee A" });
+        await obs.addObject("employees/employeeB", { key: "employees/employeeB", firstName: "Employee B" });
+        await obs.addObject("employees/employeeC", { key: "employees/employeeC", firstName: "Employee C" });
+
+        console.log("PAGE 1");
+        const page1 = await obs.searchObjects("employees", query);
+
+        console.log("PAGE 2");
+        const page2 = await obs.searchObjects("employees", page1.nextPage);
+
+        console.log("PAGE 3");
+        const page3 = await obs.searchObjects("employees", page2.nextPage);
     });
 
     it("Can do search taking changes into account.", async () => {

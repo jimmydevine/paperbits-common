@@ -1,4 +1,5 @@
 ﻿import { MediaContract } from "../media/mediaContract";
+import { Query, Page } from "../persistence";
 
 
 /**
@@ -18,6 +19,8 @@ export interface IMediaService {
     getMediaByPermalink(permalink: string): Promise<MediaContract>;
 
     search(pattern?: string, mimeType?: string): Promise<MediaContract[]>;
+
+    search2(query: Query<MediaContract>): Promise<Page<MediaContract[]>>;
 
     /**
      * Deletes specified media file.

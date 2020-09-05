@@ -168,7 +168,7 @@ describe("Offline object storage", async () => {
         await obs.addObject("employees/employeeA", { key: "employees/employeeA", firstName: "Employee A" });
         await obs.addObject("employees/employeeB", { key: "employees/employeeB", firstName: "Employee B" });
         await obs.addObject("employees/employeeC", { key: "employees/employeeC", firstName: "Employee C" });
-        // await obs.deleteObject("employees/employee2");
+        await obs.deleteObject("employees/employee2");
 
         const page1 = await obs.searchObjects("employees", query);
         const page1Keys = Object.keys(page1.value);
@@ -183,12 +183,12 @@ describe("Offline object storage", async () => {
         const page3 = await obs.searchObjects("employees", page2.nextPage);
         const page3Keys = Object.keys(page3.value);
         console.log(`Page 3: ${page3Keys.join(",")}`);
-        assert(page3Keys.includes("employee2") && page3Keys.includes("employee3"), "Page 3 must inlcude employees 2 and 3.");
+        assert(page3Keys.includes("employee3"), "Page 3 must inlcude only employee 3 (employee 2 was deleted locally, so page reduced to 1 item).");
 
         const page4 = await obs.searchObjects("employees", page3.nextPage);
         const page4Keys = Object.keys(page4.value);
         console.log(`Page 4: ${page4Keys.join(",")}`);
-        assert(page4Keys.includes("employee4"), "Page 34 must inlcude employees 4.");
+        assert(page4Keys.includes("employee4"), "Page 4 must inlcude employees 4.");
     });
 
     it("Can do search taking changes into account.", async () => {

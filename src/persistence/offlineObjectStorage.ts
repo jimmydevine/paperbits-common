@@ -504,6 +504,21 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         // console.log("Remote: " + JSON.stringify(remoteSearchResults)); // GOOD
 
+        // Apply deleted objects
+        const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
+
+        if (changesAt) {
+            /* If there are changes at the same path, apply them to search result */
+            // Objects.mergeDeep(mergedSearchResults, changesAt, true);
+
+            Object.keys(changesAt)
+                .forEach(key => {
+                    if (changesAt[key] === null) {
+                        delete remoteSearchResults[key];
+                    }
+                });
+        }
+
 
         const mergedSearchResults = {};
         Objects.mergeDeep(mergedSearchResults, remoteSearchResults, true);
@@ -512,8 +527,6 @@ export class OfflineObjectStorage implements IObjectStorage {
         // Object.assign(mergedSearchResults, remoteSearchResults);
         // Object.assign(mergedSearchResults, localSearchResults.value);
 
-
-
         // console.log("Merged: " + JSON.stringify(mergedSearchResults));
 
         // if (!remoteSearchResults || Object.keys(remoteSearchResults).length === 0) {
@@ -521,13 +534,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         //     return resultPage;
         // }
 
-        // // 2. Apply deleted objects
-        // const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
 
-        // if (changesAt) {
-        //     /* If there are changes at the same path, apply them to search result */
-        //     Objects.mergeDeep(mergedSearchResults, changesAt, true);
-        // }
 
         // console.log("After merge: " + JSON.stringify(remoteSearchResults));
 

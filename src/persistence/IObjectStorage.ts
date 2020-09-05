@@ -42,13 +42,13 @@ export interface IObjectStorage {
     searchObjects<T>(key: string, query?: Query<T>): Promise<Page<T>>;
 
     /**
-     * 
+     * Save changes.
      * @param delta 
      */
     saveChanges?(delta: Object): Promise<void>;
 
     /**
-     * 
+     * Loads data.
      */
     loadData?(): Promise<object>;
 }

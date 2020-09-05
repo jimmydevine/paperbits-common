@@ -317,6 +317,14 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
     }
 
+    private async applyDeletedObjects(): Promise<void> {
+        //
+    }
+
+    private async applyAddedOrChangedObjects(): Promise<void> {
+        //
+    }
+
     private async searchLocalChanges<T>(path: string, query?: Query<T>): Promise<LocalSearchResults<T>> {
         const searchResultObject: Bag<T> = {};
         const searchObj = Objects.getObjectAt(path, this.changesObject);
@@ -325,7 +333,7 @@ export class OfflineObjectStorage implements IObjectStorage {
             return { value: searchResultObject, totalCount: 0 };
         }
 
-        let collection = Object.values(searchObj);
+        let collection = Object.values(searchObj).filter(x => !!x);
 
         if (query) {
             if (query.filters.length > 0) {
@@ -474,8 +482,17 @@ export class OfflineObjectStorage implements IObjectStorage {
             remoteSkip = 0;
         }
 
+        let remoteTake = query.taking;
+
+        if (localSearchResultsTotalCount > query.skipping) {
+            remoteTake = remoteTake - (localSearchResultsTotalCount - query.skipping);
+        }
+
         const remoteQuery = query.copy();
         remoteQuery.skipping = remoteSkip;
+        remoteQuery.taking = remoteTake;
+
+        console.log(`RS:${remoteSkip} RT:${remoteTake} | QS:${query.skipping} QT:${query.taking}`);
 
         const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<Bag<T>>(path, remoteQuery);
 
@@ -495,7 +512,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         // Object.assign(mergedSearchResults, remoteSearchResults);
         // Object.assign(mergedSearchResults, localSearchResults.value);
 
-        resultPage.value = mergedSearchResults;
+
 
         // console.log("Merged: " + JSON.stringify(mergedSearchResults));
 
@@ -509,7 +526,7 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         // if (changesAt) {
         //     /* If there are changes at the same path, apply them to search result */
-        //     Objects.mergeDeep(remoteSearchResults, changesAt, true);
+        //     Objects.mergeDeep(mergedSearchResults, changesAt, true);
         // }
 
         // console.log("After merge: " + JSON.stringify(remoteSearchResults));
@@ -518,6 +535,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         // Objects.mergeDeepAt(path, this.stateObject, Objects.clone(remoteSearchResults), true);
         // Objects.mergeDeep(localSearchResults, remoteSearchResults, true);
 
+        resultPage.value = mergedSearchResults;
 
         return resultPage;
     }

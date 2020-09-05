@@ -1,7 +1,7 @@
 ﻿import * as Utils from "../utils";
 import * as Constants from "../constants";
 import { PageContract, PageMetadata, PageLocalizedContract, IPageService } from ".";
-import { IObjectStorage, Operator, Query } from "../persistence";
+import { IObjectStorage, Operator, Query, Page } from "../persistence";
 import { IBlockService } from "../blocks";
 import { Contract } from "../contract";
 import { ILocaleService } from "../localization";
@@ -135,10 +135,43 @@ export class PageService implements IPageService {
             if (!result) {
                 return [];
             }
-            
+
             const pages = Object.values(result);
 
             return pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
+        }
+        catch (error) {
+            throw new Error(`Unable to search pages: ${error.stack || error.message}`);
+        }
+    }
+
+    public async search2(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract[]>> {
+        if (!query) {
+            throw new Error(`Parameter "query" not specified.`);
+        }
+
+        const defaultLocale = await this.localeService.getDefaultLocale();
+        const currentLocale = await this.localeService.getCurrentLocale();
+        const searchLocale = requestedLocale || currentLocale;
+        const localizedQuery = Utils.localizeQuery(query, searchLocale);
+        const resultPage: Page<PageContract[]> = { value: [] };
+
+        try {
+            const pageOfObject = await this.objectStorage.searchObjects<Bag<PageLocalizedContract>>(this.pagesPath, localizedQuery);
+            const result = pageOfObject.value;
+
+            resultPage.nextPage = pageOfObject.nextPage
+                ? resultPage.nextPage = query.getNextPageQuery()
+                : null;
+
+            if (!result) {
+                return resultPage;
+            }
+
+            const pages = Object.values(result);
+            resultPage.value = pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
+
+            return resultPage;
         }
         catch (error) {
             throw new Error(`Unable to search pages: ${error.stack || error.message}`);

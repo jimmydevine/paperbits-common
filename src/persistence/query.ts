@@ -33,11 +33,6 @@ export class Query<T> {
         return this;
     }
 
-    public select(path: string): Query<T> {
-        this.selecting = path;
-        return this;
-    }
-
     public skip(itemsToSkip: number): Query<T> {
         this.skipping = itemsToSkip;
         return this;

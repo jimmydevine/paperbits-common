@@ -1,5 +1,6 @@
 ﻿import { Contract } from "../";
 import { PageContract } from "../pages/pageContract";
+import { Query, Page } from "../persistence";
 
 /**
  * Service for managing pages.
@@ -10,6 +11,8 @@ export interface IPageService {
      * @param pattern {string} Search pattern.
      */
     search(pattern: string, locale?: string): Promise<PageContract[]>;
+
+    search2(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract[]>>;
 
     /**
      * Returns page by specified key.

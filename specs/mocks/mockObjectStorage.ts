@@ -113,7 +113,7 @@ export class MockObjectStorage implements IObjectStorage {
         }
 
         let collection = Object.values(searchObj);
-        let collectionSize = collection.length;
+        const collectionSize = collection.length;
 
         if (query) {
             if (query.filters.length > 0) {
@@ -186,7 +186,7 @@ export class MockObjectStorage implements IObjectStorage {
 
             collection = collection.slice(skip, skip + take);
 
-            if (collectionSize > take) {
+            if (collectionSize > skip + take) {
                 resultPage.nextPage = query.getNextPageQuery<T>();
             }
 

@@ -1,3 +1,5 @@
+import { defaultPageSize } from "../constants";
+
 export enum Operator {
     equals,
     contains
@@ -17,7 +19,7 @@ export interface Filter<TLeftOperand, TRightOperand> {
 export class Query<T> {
     public filters: Filter<any, any>[] = [];
     public skipping: number = 0;
-    public taking: number = 100;
+    public taking: number = defaultPageSize;
     public selecting: string;
     public orderingBy: string;
     public orderDirection: OrderDirection;

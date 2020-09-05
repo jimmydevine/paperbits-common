@@ -13,7 +13,7 @@ interface HistoryRecord {
 }
 
 interface LocalSearchResults<T> {
-    value: Bag<T>;
+    value: T;
     totalCount: number;
 }
 
@@ -317,23 +317,15 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
     }
 
-    private async applyDeletedObjects(): Promise<void> {
-        //
-    }
-
-    private async applyAddedOrChangedObjects(): Promise<void> {
-        //
-    }
-
     private async searchLocalChanges<T>(path: string, query?: Query<T>): Promise<LocalSearchResults<T>> {
-        const searchResultObject: Bag<T> = {};
+        const searchResultObject: T = <T>{};
         const searchObj = Objects.getObjectAt(path, this.changesObject);
 
         if (!searchObj) {
             return { value: searchResultObject, totalCount: 0 };
         }
 
-        let collection = Object.values(searchObj).filter(x => !!x);
+        let collection = Object.values(searchObj).filter(x => !!x); // skip deleted objects
 
         if (query) {
             if (query.filters.length > 0) {
@@ -432,48 +424,37 @@ export class OfflineObjectStorage implements IObjectStorage {
             const segments = item.key.split("/");
             const key = segments[1];
 
-            Objects.setValue(key, searchResultObject, item);
+            Objects.setValue(key, <any>searchResultObject, item);
             Objects.cleanupObject(item); // Ensure all "undefined" are cleaned up
         });
 
         return { value: searchResultObject, totalCount: totalObjects };
     }
 
-    public async searchObjects<T>(path: string, query?: Query<T>): Promise<Page<T>> {
+    public async searchObjects<T>(path: string, query: Query<T> = Query.from<T>()): Promise<Page<T>> {
         if (!path) {
             throw new Error(`Parameter "path" not specified.`);
         }
 
         await this.initialize();
 
-        if (!query) {
-            query = Query.from<T>();
-        }
-
         const resultPage: Page<any> = { value: {} };
 
-        /**
-         * 1. Search local changes to see if there are added objects matching search criteria;
-         * 2. Added objects always go to the top of search resuls;
-         * 3. When "skip" goes beyond local result set, we call remote storage to fill search results page (determined by "take");
-         */
-
-        // 1. Find locally added/changed objects
+        /* Find locally added/changed objects */
         const localSearchResults = await this.searchLocalChanges(path, query);
         const localSearchResultsTotalCount = localSearchResults.totalCount;
 
-        // console.log("Local: " + JSON.stringify(localSearchResults.value)); // GOOD
-
-        // const pageSize = query.taking - query.skipping;
-        // const missingCount = localSearchResultsTotalCount - query.skipping + query.taking;
-
-        if ((query.skipping + query.taking) < localSearchResultsTotalCount) {  // requested page is withing local search result set.
+        /**
+         * Check if requested page size is withing local search result set. 
+         * If yes, then no need to call remote. 
+         */
+        if ((query.skipping + query.taking) < localSearchResultsTotalCount) {
             resultPage.value = localSearchResults.value;
             resultPage.nextPage = query.getNextPageQuery();
             return resultPage;
         }
 
-        // Try to fill the page with remote result set
+        /* Pages size not filled. Try to fill the gap with remote search results. */
 
         // Adjusting remote query skip
         let remoteSkip = query.skipping - localSearchResultsTotalCount;
@@ -492,9 +473,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         remoteQuery.skipping = remoteSkip;
         remoteQuery.taking = remoteTake;
 
-        console.log(`RS:${remoteSkip} RT:${remoteTake} | QS:${query.skipping} QT:${query.taking}`);
-
-        const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<Bag<T>>(path, remoteQuery);
+        const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<unknown>(path, remoteQuery);
 
         if (pageOfRemoteSearchResults.nextPage) {
             resultPage.nextPage = query.getNextPageQuery();
@@ -502,15 +481,10 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         const remoteSearchResults = pageOfRemoteSearchResults.value;
 
-        // console.log("Remote: " + JSON.stringify(remoteSearchResults)); // GOOD
-
-        // Apply deleted objects
+        /* Remove deleted objects from remote search resuls */
         const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
 
         if (changesAt) {
-            /* If there are changes at the same path, apply them to search result */
-            // Objects.mergeDeep(mergedSearchResults, changesAt, true);
-
             Object.keys(changesAt)
                 .forEach(key => {
                     if (changesAt[key] === null) {
@@ -519,28 +493,10 @@ export class OfflineObjectStorage implements IObjectStorage {
                 });
         }
 
-
+        /* Merging local searh results with remote search results */
         const mergedSearchResults = {};
         Objects.mergeDeep(mergedSearchResults, remoteSearchResults, true);
         Objects.mergeDeep(mergedSearchResults, localSearchResults.value, true);
-
-        // Object.assign(mergedSearchResults, remoteSearchResults);
-        // Object.assign(mergedSearchResults, localSearchResults.value);
-
-        // console.log("Merged: " + JSON.stringify(mergedSearchResults));
-
-        // if (!remoteSearchResults || Object.keys(remoteSearchResults).length === 0) {
-        //     resultPage.value = <any>remoteSearchResults;
-        //     return resultPage;
-        // }
-
-
-
-        // console.log("After merge: " + JSON.stringify(remoteSearchResults));
-
-        // /* Complement stateObject with new objects from search result, if any */
-        // Objects.mergeDeepAt(path, this.stateObject, Objects.clone(remoteSearchResults), true);
-        // Objects.mergeDeep(localSearchResults, remoteSearchResults, true);
 
         resultPage.value = mergedSearchResults;
 

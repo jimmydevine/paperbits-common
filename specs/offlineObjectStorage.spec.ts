@@ -45,16 +45,18 @@ const initialData3: any = {
         employee2: {
             key: "employees/employee2",
             firstName: "Employee 2"
-        }
-        ,
+        },
         employee3: {
             key: "employees/employee3",
             firstName: "Employee 3"
-        }
-        ,
+        },
         employee4: {
             key: "employees/employee4",
             firstName: "Employee 4"
+        }        ,
+        employee5: {
+            key: "employees/employee5",
+            firstName: "Employee 5"
         }
     }
 };
@@ -144,13 +146,12 @@ describe("Offline object storage", async () => {
         expect(remoteObjectStorage.requestCount).equals(1); // number of remote requests still 1.
     });
 
-    it("Can take added records into account in pagination.", async () => {
+    it("Can do search taking changes into account.", async () => {
         /**
          * How search works:
          * 1. Take whole page from remote search results;
          * 2. Remove deleted objects using CHANGES object;
          * 3. Add added/modified object using CHANGES object;
-         * 4. OPT: if page, not filled and next link present, all next page until page size filled.
          */
 
         const memoryCache = new MemoryCache();
@@ -188,46 +189,7 @@ describe("Offline object storage", async () => {
         const page4 = await obs.searchObjects("employees", page3.nextPage);
         const page4Keys = Object.keys(page4.value);
         console.log(`Page 4: ${page4Keys.join(",")}`);
-        assert(page4Keys.includes("employee4"), "Page 4 must inlcude employees 4.");
-    });
-
-    it("Can do search taking changes into account.", async () => {
-        const memoryCache = new MemoryCache();
-        const remoteObjectStorage: any = new MockObjectStorage();
-        const obs = new OfflineObjectStorage(memoryCache);
-        obs.setRemoteObjectStorage(remoteObjectStorage);
-        obs.isOnline = true;
-        const changesObject: any = obs["changesObject"];
-        const stateObject: any = obs["stateObject"];
-
-        await obs.deleteObject("employees/employee1");
-        await obs.updateObject("employees/employee2", {
-            key: "employees/employee2",
-            firstName: "Janne",
-            lastName: "Doe"
-        });
-
-        const pageOfResults1 = await obs.searchObjects<any>("employees");
-        const searchResult1 = pageOfResults1.value;
-
-        console.log(pageOfResults1);
-
-        assert.isUndefined(searchResult1.employee1);
-        assert.isNotNull(searchResult1.employee2);
-        expect(searchResult1.employee2.lastName).equals("Doe");
-
-        const pageOfResults2 = await obs.searchObjects<any>("files");
-        const searchResult2 = pageOfResults2.value;
-        console.log(pageOfResults2);
-        assert.isNotNull(searchResult2.file1);
-        assert.isNotNull(searchResult2.file2);
-        assert.isUndefined(searchResult2.employees); // Ensure not previous results mixed in.
-
-        assert.isUndefined(stateObject.employees.employee1);
-        assert.isNotNull(stateObject.employees.employee2);
-        assert.isNotNull(stateObject.files.file1);
-        assert.isNotNull(stateObject.files.file2);
-        assert.isNull(changesObject.employees.employee1);
+        assert(page4Keys.includes("employee4") && page4Keys.includes("employee5"), "Page 4 must inlcude employees 4 and 5.");
     });
 
     it("Performs getObject taking changes into account.", async () => {

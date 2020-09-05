@@ -157,18 +157,18 @@ export class PageService implements IPageService {
         const resultPage: Page<PageContract[]> = { value: [] };
 
         try {
-            const pageOfObject = await this.objectStorage.searchObjects<Bag<PageLocalizedContract>>(this.pagesPath, localizedQuery);
-            const result = pageOfObject.value;
+            const pageOfResults = await this.objectStorage.searchObjects<Bag<PageLocalizedContract>>(this.pagesPath, localizedQuery);
+            const results = pageOfResults.value;
 
-            resultPage.nextPage = pageOfObject.nextPage
+            resultPage.nextPage = pageOfResults.nextPage
                 ? resultPage.nextPage = query.getNextPageQuery()
                 : null;
 
-            if (!result) {
+            if (!results) {
                 return resultPage;
             }
 
-            const pages = Object.values(result);
+            const pages = Object.values(results);
             resultPage.value = pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
 
             return resultPage;

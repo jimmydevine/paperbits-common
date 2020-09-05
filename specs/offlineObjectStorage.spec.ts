@@ -2,7 +2,6 @@ import { OfflineObjectStorage, Query } from "../src/persistence";
 import { assert, expect } from "chai";
 import { MemoryCache } from "../src/caching";
 import { MockObjectStorage } from "./mocks/mockObjectStorage";
-import { canSplit } from "prosemirror-transform";
 
 
 const initialData1 = {

@@ -1,8 +1,9 @@
 ﻿import * as Utils from "../utils";
 import { UrlContract } from "../urls/urlContract";
 import { IUrlService } from "../urls/IUrlService";
-import { IObjectStorage, Query, Operator } from "../persistence";
+import { IObjectStorage, Query, Operator, Page } from "../persistence";
 import * as _ from "lodash";
+import { Bag } from "../bag";
 
 const urlsPath = "urls";
 
@@ -16,18 +17,48 @@ export class UrlService implements IUrlService {
     public async getUrlByKey(key: string): Promise<UrlContract> {
         return await this.objectStorage.getObject<UrlContract>(key);
     }
+    
+    public async search(query: Query<UrlContract>): Promise<Page<UrlContract[]>> {
+        if (!query) {
+            throw new Error(`Parameter "query" not specified.`);
+        }
 
-    public async search(pattern: string): Promise<UrlContract[]> {
-        const query = Query
-            .from<UrlContract>()
-            .where("title", Operator.contains, pattern)
-            .orderBy("title");
+        const resultPage: Page<UrlContract[]> = { value: [] };
 
-        const pageOfObjects = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
-        const result = pageOfObjects;
+        try {
+            const pageOfResults = await this.objectStorage.searchObjects<Bag<UrlContract>>(urlsPath, query);
+            const results = pageOfResults.value;
 
-        return Object.values(result);
+            resultPage.nextPage = pageOfResults.nextPage
+                ? resultPage.nextPage = query.getNextPageQuery()
+                : null;
+
+            if (!results) {
+                return resultPage;
+            }
+
+            const uls = Object.values(results);
+
+            resultPage.value = uls;
+
+            return resultPage;
+        }
+        catch (error) {
+            throw new Error(`Unable to search URLs: ${error.stack || error.message}`);
+        }
     }
+
+    // public async search(pattern: string): Promise<UrlContract[]> {
+    //     const query = Query
+    //         .from<UrlContract>()
+    //         .where("title", Operator.contains, pattern)
+    //         .orderBy("title");
+
+    //     const pageOfObjects = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
+    //     const result = pageOfObjects;
+
+    //     return Object.values(result);
+    // }
 
     public async deleteUrl(url: UrlContract): Promise<void> {
         const deleteUrlPromise = this.objectStorage.deleteObject(url.key);

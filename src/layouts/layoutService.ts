@@ -79,12 +79,15 @@ export class LayoutService implements ILayoutService {
         const currentLocale = await this.localeService.getCurrentLocale();
         const searchLocale = requestedLocale || currentLocale;
 
-        let query = Query.from<LayoutContract>();
+        let query = Query
+            .from<LayoutContract>()
+            .take(100);
 
         if (pattern || requestedLocale) {
             query = Query.from<LayoutContract>()
                 .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
-                .orderBy(`locales/${searchLocale}/title`);
+                .orderBy(`locales/${searchLocale}/title`)
+                .take(100);
         }
 
         const pageOfObjects = await this.objectStorage.searchObjects<Bag<LayoutLocalizedContract>>(this.layoutsPath, query);
@@ -174,7 +177,8 @@ export class LayoutService implements ILayoutService {
         const defaultLocale = await this.localeService.getDefaultLocale();
         const query = Query
             .from<LayoutContract>()
-            .where(`locales/${defaultLocale}/permalinkTemplate`, Operator.equals, permalinkTemplate);
+            .where(`locales/${defaultLocale}/permalinkTemplate`, Operator.equals, permalinkTemplate)
+            .take(100);
 
         const pageOfObjects = await this.objectStorage.searchObjects<LayoutContract>(this.layoutsPath, query);
         const result = pageOfObjects.value;
@@ -289,7 +293,11 @@ export class LayoutService implements ILayoutService {
         const defaultLocale = await this.localeService.getDefaultLocale();
         const currentLocale = await this.localeService.getCurrentLocale();
 
-        const pageOfObjects = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath);
+        const query = Query
+            .from<LayoutContract>()
+            .take(100);
+
+        const pageOfObjects = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath, query);
         const result = pageOfObjects.value;
         const layouts = Object.keys(result).map(key => result[key]);
 

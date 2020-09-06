@@ -115,37 +115,7 @@ export class PageService implements IPageService {
         return this.localizedContractToContract(defaultLocale, currentLocale, requestedLocale, pageContract);
     }
 
-    public async search(pattern: string, requestedLocale?: string): Promise<PageContract[]> {
-        const defaultLocale = await this.localeService.getDefaultLocale();
-        const currentLocale = await this.localeService.getCurrentLocale();
-        const searchLocale = requestedLocale || currentLocale;
-
-        let query = Query.from<PageContract>();
-
-        if (pattern || requestedLocale) {
-            query = Query.from<PageContract>()
-                .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
-                .orderBy(`locales/${searchLocale}/title`);
-        }
-
-        try {
-            const pageOfObject = await this.objectStorage.searchObjects<Bag<PageLocalizedContract>>(this.pagesPath, query);
-            const result = pageOfObject.value;
-
-            if (!result) {
-                return [];
-            }
-
-            const pages = Object.values(result);
-
-            return pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
-        }
-        catch (error) {
-            throw new Error(`Unable to search pages: ${error.stack || error.message}`);
-        }
-    }
-
-    public async search2(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract[]>> {
+    public async search(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract[]>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }

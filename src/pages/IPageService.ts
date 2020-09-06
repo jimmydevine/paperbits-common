@@ -8,16 +8,10 @@ import { Query, Page } from "../persistence";
 export interface IPageService {
     /**
      * Searches for pages that contain specified pattern in their title, description or keywords.
-     * @param pattern {string} Search pattern.
-     */
-    search(pattern: string, locale?: string): Promise<PageContract[]>;
-
-    /**
-     * Searches for pages that contain specified pattern in their title, description or keywords.
      * @param query {Query<PageContract>} Search query.
      * @param locale {string} Search locale.
      */
-    search2(query: Query<PageContract>, locale?: string): Promise<Page<PageContract[]>>;
+    search(query: Query<PageContract>, locale?: string): Promise<Page<PageContract[]>>;
 
     /**
      * Returns page by specified key.

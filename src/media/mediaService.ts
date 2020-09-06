@@ -56,35 +56,7 @@ export class MediaService implements IMediaService {
         return undefined;
     }
 
-    public async search(pattern: string = "", mimeType: string): Promise<MediaContract[]> {
-        let query = Query
-            .from<MediaContract>()
-            .orderBy("fileName");
-
-        if (pattern) {
-            query = query.where("fileName", Operator.contains, pattern);
-        }
-
-        if (mimeType) {
-            query = query.where("mimeType", Operator.contains, mimeType);
-        }
-
-        const pageOfResults = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);
-        const results = pageOfResults.value;
-        const mediaFiles = [];
-        
-        for (const media of Object.values(results)) {
-            if (media.blobKey) {
-                const downloadUrl = await this.getDownloadUrlFromBlobKey(media.blobKey);
-                media.downloadUrl = downloadUrl || media.downloadUrl;
-            }
-            mediaFiles.push(media);
-        }
-
-        return mediaFiles;
-    }
-
-    public async search2(query: Query<MediaContract>): Promise<Page<MediaContract[]>> {
+    public async search(query: Query<MediaContract>): Promise<Page<MediaContract[]>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }

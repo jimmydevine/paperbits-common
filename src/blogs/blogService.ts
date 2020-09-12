@@ -43,10 +43,10 @@ export class BlogService implements IBlogService {
             .where("title", Operator.contains, pattern)
             .orderBy("title");
 
-        const pageOfObjects = await this.objectStorage.searchObjects<Bag<BlogPostContract>>(blogPostsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<BlogPostContract>(blogPostsPath, query);
         const result = pageOfObjects.value;
 
-        return Object.values(result);
+        return result;
     }
 
     public async deleteBlogPost(blogPost: BlogPostContract): Promise<void> {

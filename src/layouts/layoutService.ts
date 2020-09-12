@@ -90,9 +90,9 @@ export class LayoutService implements ILayoutService {
                 .take(100);
         }
 
-        const pageOfObjects = await this.objectStorage.searchObjects<Bag<LayoutLocalizedContract>>(this.layoutsPath, query);
+        const pageOfObjects = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath, query);
         const result = pageOfObjects.value;
-        const layouts = Object.values(result);
+        const layouts = result;
 
         return layouts.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
     }

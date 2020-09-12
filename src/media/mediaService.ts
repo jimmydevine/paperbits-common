@@ -56,12 +56,12 @@ export class MediaService implements IMediaService {
         return undefined;
     }
 
-    public async search(query: Query<MediaContract>): Promise<Page<MediaContract[]>> {
+    public async search(query: Query<MediaContract>): Promise<Page<MediaContract>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }
 
-        const resultPage: Page<MediaContract[]> = { value: [] };
+        const resultPage: Page<MediaContract> = { value: [] };
 
         try {
             const pageOfResults = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);

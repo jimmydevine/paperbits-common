@@ -323,12 +323,11 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
     }
 
-    private async searchLocalChanges<T>(path: string, query?: Query<T>): Promise<LocalSearchResults<T>> {
-        const searchResultObject: T = <T>{};
+    private async searchLocalChanges<T>(path: string, query?: Query<T>): Promise<LocalSearchResults<T[]>> {
         const searchObj = Objects.getObjectAt(path, this.changesObject);
 
         if (!searchObj) {
-            return { value: searchResultObject, totalCount: 0 };
+            return { value: [], totalCount: 0 };
         }
 
         let collection = Object.values(searchObj).filter(x => !!x); // skip deleted objects
@@ -419,22 +418,10 @@ export class OfflineObjectStorage implements IObjectStorage {
             }
         }
 
-        const totalObjects = collection.length;
+        const totalObjectsMatchingCriteria = collection.length;
         collection = collection.slice(query.skipping, query.skipping + query.taking);
 
-        collection.forEach(item => {
-            if (!item.key) {
-                throw new Error(`Searched object doesn't have "key" property.`);
-            }
-
-            const segments = item.key.split("/");
-            const key = segments[1];
-
-            Objects.setValue(key, <any>searchResultObject, item);
-            Objects.cleanupObject(item); // Ensure all "undefined" are cleaned up
-        });
-
-        return { value: searchResultObject, totalCount: totalObjects };
+        return { value: collection, totalCount: totalObjectsMatchingCriteria };
     }
 
     public async searchObjects<T>(path: string, query: Query<T> = Query.from<T>()): Promise<Page<T>> {
@@ -444,7 +431,7 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         await this.initialize();
 
-        const resultPage: Page<any> = { value: {} };
+        const resultPage: Page<T> = { value: [] };
 
         /* Find locally added/changed objects */
         const localSearchResults = await this.searchLocalChanges(path, query);
@@ -479,7 +466,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         remoteQuery.skipping = remoteSkip;
         remoteQuery.taking = remoteTake;
 
-        const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<unknown>(path, remoteQuery);
+        const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<T>(path, remoteQuery);
 
         if (pageOfRemoteSearchResults.nextPage) {
             resultPage.nextPage = query.getNextPageQuery();
@@ -493,18 +480,20 @@ export class OfflineObjectStorage implements IObjectStorage {
         if (changesAt) {
             Object.keys(changesAt)
                 .forEach(key => {
-                    if (changesAt[key] === null) {
-                        delete remoteSearchResults[key];
+                    const index = remoteSearchResults.findIndex(x => x["key"] === key);
+
+                    if (index >= 0 && changesAt[key] === null) {
+                        remoteSearchResults.splice(index, 1);
                     }
                 });
         }
 
         /* Merging local searh results with remote search results */
-        const mergedSearchResults = {};
-        Objects.mergeDeep(mergedSearchResults, remoteSearchResults, true);
-        Objects.mergeDeep(mergedSearchResults, localSearchResults.value, true);
+        // const mergedSearchResults = {};
+        // Objects.mergeDeep(mergedSearchResults, remoteSearchResults, true);
+        // Objects.mergeDeep(mergedSearchResults, localSearchResults.value, true);
 
-        resultPage.value = mergedSearchResults;
+        resultPage.value = localSearchResults.value.concat(remoteSearchResults);
 
         return resultPage;
     }

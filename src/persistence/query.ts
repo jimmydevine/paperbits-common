@@ -94,7 +94,10 @@ export class Query<T> {
 }
 
 export interface Page<T> {
-    value: T;
+    value: T[];
     prevPage?: Query<T>;
     nextPage?: Query<T>;
+
+    takePrev?(numberOfRecords: number): Promise<Page<T>>;
+    takeNext?(numberOfRecords: number): Promise<Page<T>>;
 }

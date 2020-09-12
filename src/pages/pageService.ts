@@ -115,7 +115,7 @@ export class PageService implements IPageService {
         return this.localizedContractToContract(defaultLocale, currentLocale, requestedLocale, pageContract);
     }
 
-    public async search(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract[]>> {
+    public async search(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }
@@ -125,10 +125,10 @@ export class PageService implements IPageService {
         const searchLocale = requestedLocale || currentLocale;
 
         const localizedQuery = Utils.localizeQuery(query, searchLocale);
-        const resultPage: Page<PageContract[]> = { value: [] };
+        const resultPage: Page<PageContract> = { value: [] };
 
         try {
-            const pageOfResults = await this.objectStorage.searchObjects<Bag<PageLocalizedContract>>(this.pagesPath, localizedQuery);
+            const pageOfResults = await this.objectStorage.searchObjects<PageLocalizedContract>(this.pagesPath, localizedQuery);
             const results = pageOfResults.value;
 
             resultPage.nextPage = pageOfResults.nextPage

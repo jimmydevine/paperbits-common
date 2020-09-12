@@ -11,7 +11,7 @@ export interface IPageService {
      * @param query {Query<PageContract>} Search query.
      * @param locale {string} Search locale.
      */
-    search(query: Query<PageContract>, locale?: string): Promise<Page<PageContract[]>>;
+    search(query: Query<PageContract>, locale?: string): Promise<Page<PageContract>>;
 
     /**
      * Returns page by specified key.

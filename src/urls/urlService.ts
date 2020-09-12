@@ -1,9 +1,8 @@
 ﻿import * as Utils from "../utils";
 import { UrlContract } from "../urls/urlContract";
 import { IUrlService } from "../urls/IUrlService";
-import { IObjectStorage, Query, Operator, Page } from "../persistence";
+import { IObjectStorage, Query, Page } from "../persistence";
 import * as _ from "lodash";
-import { Bag } from "../bag";
 
 const urlsPath = "urls";
 
@@ -18,15 +17,15 @@ export class UrlService implements IUrlService {
         return await this.objectStorage.getObject<UrlContract>(key);
     }
     
-    public async search(query: Query<UrlContract>): Promise<Page<UrlContract[]>> {
+    public async search(query: Query<UrlContract>): Promise<Page<UrlContract>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }
 
-        const resultPage: Page<UrlContract[]> = { value: [] };
+        const resultPage: Page<UrlContract> = { value: [] };
 
         try {
-            const pageOfResults = await this.objectStorage.searchObjects<Bag<UrlContract>>(urlsPath, query);
+            const pageOfResults = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
             const results = pageOfResults.value;
 
             resultPage.nextPage = pageOfResults.nextPage
@@ -37,7 +36,7 @@ export class UrlService implements IUrlService {
                 return resultPage;
             }
 
-            const uls = Object.values(results);
+            const uls = results;
 
             resultPage.value = uls;
 

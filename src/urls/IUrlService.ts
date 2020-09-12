@@ -8,7 +8,7 @@ export interface IUrlService {
     /**
      * Searches for urls that contain specified pattern in their title, description or keywords.
      */
-    search(query: Query<UrlContract>): Promise<Page<UrlContract[]>>;
+    search(query: Query<UrlContract>): Promise<Page<UrlContract>>;
 
     /**
      * Returns a url by specified key;

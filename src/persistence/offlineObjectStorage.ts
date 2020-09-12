@@ -192,17 +192,16 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         await this.initialize();
 
-        /* 1. Check if object exists locally. If yes, return it (without querying remote). */
-        let locallyCachedObject = Objects.getObjectAt<T>(path, this.stateObject);
+        /* 1. Check locally changed object */
+        const locallyChangedObject = Objects.getObjectAt<T>(path, this.changesObject);
 
-        if (locallyCachedObject) {
-            return Objects.clone(locallyCachedObject); // Cloning to loose references.
+        // If there is one, return it now.
+        if (!!locallyChangedObject) {
+            return Objects.clone(locallyChangedObject); // Cloning to loose references.
         }
 
-        /* 2. Check if object deleted locally. If yes, return null. */
-        const changesAt = Objects.getObjectAt<T>(path, this.changesObject);
-
-        if (changesAt === null) {
+        /* 2. Check if object marked as deleted. */
+        if (locallyChangedObject === null) {
             /*
                Note: "null" (not undefined) in changesObject specifically means that this object
                has been deleted locally (but not yet saved to underlying storage). Hence, no need to check
@@ -211,7 +210,14 @@ export class OfflineObjectStorage implements IObjectStorage {
             return undefined;
         }
 
-        /* 3. Query remote. If returned, cache locally. */
+        /* 3. Check if object exists locally. If yes, return it (without querying remote). */
+        let locallyCachedObject = Objects.getObjectAt<T>(path, this.stateObject);
+
+        if (locallyCachedObject) {
+            return Objects.clone(locallyCachedObject); // Cloning to loose references.
+        }
+
+        /* 4. If no loally changed of cached object, query remote. If returned, cache locally. */
         const remoteObjectStorageResult = await this.remoteObjectStorage.getObject<T>(path);
 
         if (!!remoteObjectStorageResult) { // Adding to local cache.

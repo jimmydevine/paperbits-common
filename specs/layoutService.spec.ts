@@ -3,6 +3,7 @@ import { LayoutService, LayoutContract } from "../src/layouts";
 import { MockObjectStorage } from "./mocks/mockObjectStorage";
 import { MockLocaleService } from "./mocks/mockLocaleService";
 import { Contract } from "../src";
+import { copySync } from "fs-extra";
 
 describe("Layout service", async () => {
     it("Can create layout metadata in specified locale when metadata doesn't exists.", async () => {
@@ -303,7 +304,8 @@ describe("Layout service", async () => {
             },
             files: {
                 "ru-ru-content": {
-                    type: "ru-ru-content"
+                    type: "layout",
+                    nodes: [{ type: "ru-ru-content" }]
                 }
             }
         };
@@ -315,7 +317,7 @@ describe("Layout service", async () => {
         const localizedService = new LayoutService(objectStorage, localeService);
 
         const layoutContent = await localizedService.getLayoutContent("layouts/layout1");
-        assert.isTrue(layoutContent.type === "ru-ru-content", "Layout content is in invalid locale.");
+        assert.isTrue(layoutContent.nodes[0].type === "ru-ru-content", "Layout content is in invalid locale.");
     });
 
     it("Returns layout content in default locale when specified locale doesn't exists.", async () => {
@@ -338,7 +340,8 @@ describe("Layout service", async () => {
             },
             files: {
                 "en-us-content": {
-                    type: "en-us-content"
+                    type: "layout",
+                    nodes: [{ type: "en-us-content" }],
                 }
             }
         };
@@ -350,7 +353,7 @@ describe("Layout service", async () => {
         const localizedService = new LayoutService(objectStorage, localeService);
 
         const layoutContent = await localizedService.getLayoutContent("layouts/layout1");
-        assert.isTrue(layoutContent.type === "en-us-content", "Layout content is in invalid locale.");
+        assert.isTrue(layoutContent.nodes[0].type === "en-us-content", "Layout content is in invalid locale.");
     });
 
     it("Can create layout.", async () => {

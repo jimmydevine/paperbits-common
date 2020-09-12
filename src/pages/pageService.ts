@@ -123,6 +123,7 @@ export class PageService implements IPageService {
         const defaultLocale = await this.localeService.getDefaultLocale();
         const currentLocale = await this.localeService.getCurrentLocale();
         const searchLocale = requestedLocale || currentLocale;
+
         const localizedQuery = Utils.localizeQuery(query, searchLocale);
         const resultPage: Page<PageContract[]> = { value: [] };
 

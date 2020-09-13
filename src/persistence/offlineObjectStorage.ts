@@ -1,7 +1,5 @@
 import * as Objects from "../objects";
 import * as _ from "lodash";
-import * as Utils from "../utils";
-import { Bag } from "./../bag";
 import { IObjectStorage, Query, Operator, OrderDirection, Page } from "../persistence";
 import { IObjectStorageMiddleware } from "./IObjectStorageMiddleware";
 import { EventManager } from "../events";
@@ -424,6 +422,22 @@ export class OfflineObjectStorage implements IObjectStorage {
         return { value: collection, totalCount: totalObjectsMatchingCriteria };
     }
 
+    private convertPage<T>(remotePage: Page<T>): Page<T> {
+        const resultPage: Page<T> = {
+            value: remotePage.value,
+            takeNext: async (n?: number): Promise<Page<T>> => {
+                const nextRemotePage = await remotePage.takeNext();
+                return this.convertPage(nextRemotePage);
+            }
+        };
+
+        if (!remotePage.takeNext) {
+            resultPage.takeNext = null;
+        }
+
+        return resultPage;
+    }
+
     public async searchObjects<T>(path: string, query: Query<T> = Query.from<T>()): Promise<Page<T>> {
         if (!path) {
             throw new Error(`Parameter "path" not specified.`);
@@ -431,21 +445,26 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         await this.initialize();
 
-        const resultPage: Page<T> = { value: [] };
+        const resultPage: Page<T> = {
+            value: [],
+            takeNext: null
+        };
 
         /* Find locally added/changed objects */
         const localSearchResults = await this.searchLocalChanges(path, query);
         const localSearchResultsTotalCount = localSearchResults.totalCount;
 
+
+
         /**
          * Check if requested page size is withing local search result set. 
          * If yes, then no need to call remote. 
          */
-        if ((query.skipping + query.taking) < localSearchResultsTotalCount) {
-            resultPage.value = localSearchResults.value;
-            resultPage.nextPage = query.getNextPageQuery();
-            return resultPage;
-        }
+        // if ((query.skipping + query.taking) < localSearchResultsTotalCount) {
+        //     resultPage.value = localSearchResults.value;
+        //     resultPage.nextPage = query.getNextPageQuery();
+        //     return resultPage;
+        // }
 
         /* Pages size not filled. Try to fill the gap with remote search results. */
 
@@ -463,16 +482,26 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
 
         const remoteQuery = query.copy();
-        remoteQuery.skipping = remoteSkip;
-        remoteQuery.taking = remoteTake;
+        // remoteQuery.skipping = remoteSkip;
+        // remoteQuery.taking = remoteTake;
 
         const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<T>(path, remoteQuery);
 
-        if (pageOfRemoteSearchResults.nextPage) {
-            resultPage.nextPage = query.getNextPageQuery();
-        }
+        // if (pageOfRemoteSearchResults.nextPage) {
+        //     resultPage.nextPage = query.getNextPageQuery();
+        // }
 
         const remoteSearchResults = pageOfRemoteSearchResults.value;
+
+        if (pageOfRemoteSearchResults.takeNext) {
+            resultPage.takeNext = async (n?: number): Promise<Page<T>> => {
+                const nextRemotePage = await pageOfRemoteSearchResults.takeNext();
+
+                // TODO: Remove all deleted pages from results.
+
+                return this.convertPage(nextRemotePage);
+            };
+        }
 
         /* Remove deleted objects from remote search resuls */
         const changesAt = Objects.getObjectAt(path, Objects.clone(this.changesObject));
@@ -489,10 +518,6 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
 
         /* Merging local searh results with remote search results */
-        // const mergedSearchResults = {};
-        // Objects.mergeDeep(mergedSearchResults, remoteSearchResults, true);
-        // Objects.mergeDeep(mergedSearchResults, localSearchResults.value, true);
-
         resultPage.value = localSearchResults.value.concat(remoteSearchResults);
 
         return resultPage;

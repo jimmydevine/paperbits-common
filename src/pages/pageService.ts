@@ -115,6 +115,22 @@ export class PageService implements IPageService {
         return this.localizedContractToContract(defaultLocale, currentLocale, requestedLocale, pageContract);
     }
 
+    private convertPage(localizedPage: Page<PageLocalizedContract>, defaultLocale: string, searchLocale: string): Page<PageContract> {
+        const resultPage: Page<PageContract> = {
+            value: localizedPage.value.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x)),
+            takeNext: async (n?: number): Promise<Page<PageContract>> => {
+                const nextLocalizedPage = await localizedPage.takeNext();
+                return this.convertPage(nextLocalizedPage, defaultLocale, searchLocale);
+            }
+        };
+
+        if (!localizedPage.takeNext) {
+            resultPage.takeNext = null;
+        }
+
+        return resultPage;
+    }
+
     public async search(query: Query<PageContract>, requestedLocale?: string): Promise<Page<PageContract>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
@@ -125,24 +141,35 @@ export class PageService implements IPageService {
         const searchLocale = requestedLocale || currentLocale;
 
         const localizedQuery = Utils.localizeQuery(query, searchLocale);
-        const resultPage: Page<PageContract> = { value: [] };
 
         try {
+            const resultPage: Page<PageContract> = { value: [] };
+
             const pageOfResults = await this.objectStorage.searchObjects<PageLocalizedContract>(this.pagesPath, localizedQuery);
-            const results = pageOfResults.value;
 
-            resultPage.nextPage = pageOfResults.nextPage
-                ? resultPage.nextPage = query.getNextPageQuery()
-                : null;
 
-            if (!results) {
-                return resultPage;
-            }
+            return this.convertPage(pageOfResults, defaultLocale, searchLocale);
+            // const results = pageOfResults.value;
 
-            const pages = Object.values(results);
-            resultPage.value = pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
+            // resultPage.nextPage = pageOfResults.nextPage
+            //     ? resultPage.nextPage = query.getNextPageQuery()
+            //     : null;
 
-            return resultPage;
+            // if (!results) {
+            //     return resultPage;
+            // }
+
+            // const pages = Object.values(results);
+            // resultPage.value = pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
+            // resultPage.takeNext = async () => {
+            //     const ppp: Page<PageContract> = {
+            //         value: []
+            //     };
+            //     const n = await pageOfResults.takeNext();
+
+            // }
+
+            // return resultPage;
         }
         catch (error) {
             throw new Error(`Unable to search pages: ${error.stack || error.message}`);

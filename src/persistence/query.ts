@@ -98,6 +98,6 @@ export interface Page<T> {
     prevPage?: Query<T>;
     nextPage?: Query<T>;
 
-    takePrev?(numberOfRecords: number): Promise<Page<T>>;
-    takeNext?(numberOfRecords: number): Promise<Page<T>>;
+    takePrev?(numberOfRecords?: number): Promise<Page<T>>;
+    takeNext?(numberOfRecords?: number): Promise<Page<T>>;
 }

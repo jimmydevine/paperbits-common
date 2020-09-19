@@ -56,41 +56,34 @@ export class MediaService implements IMediaService {
         return undefined;
     }
 
+    private convertPage(pageOfMedia: Page<MediaContract>): Page<MediaContract> {
+        const resultPage: Page<MediaContract> = {
+            value: pageOfMedia.value,
+            takeNext: async (): Promise<Page<MediaContract>> => {
+                const nextLocalizedPage = await pageOfMedia.takeNext();
+                return this.convertPage(nextLocalizedPage);
+            }
+        };
+
+        if (!pageOfMedia.takeNext) {
+            resultPage.takeNext = null;
+        }
+
+        return resultPage;
+    }
+
     public async search(query: Query<MediaContract>): Promise<Page<MediaContract>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }
 
-        const resultPage: Page<MediaContract> = { value: [] };
-
         try {
             const pageOfResults = await this.objectStorage.searchObjects<MediaContract>(Constants.mediaRoot, query);
-            const results = pageOfResults.value;
-
-            resultPage.nextPage = pageOfResults.nextPage
-                ? resultPage.nextPage = query.getNextPageQuery()
-                : null;
-
-            if (!results) {
-                return resultPage;
-            }
-
-            const mediaFiles = [];
-
-            for (const media of Object.values(results)) {
-                if (media.blobKey) {
-                    const downloadUrl = await this.getDownloadUrlFromBlobKey(media.blobKey);
-                    media.downloadUrl = downloadUrl || media.downloadUrl;
-                }
-                mediaFiles.push(media);
-            }
-
-            resultPage.value = mediaFiles;
-
-            return resultPage;
+            return this.convertPage(pageOfResults);
+          
         }
         catch (error) {
-            throw new Error(`Unable to search pages: ${error.stack || error.message}`);
+            throw new Error(`Unable to search media: ${error.stack || error.message}`);
         }
     }
 

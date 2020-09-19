@@ -5,7 +5,6 @@ import { IObjectStorage, Operator, Query, Page } from "../persistence";
 import { IBlockService } from "../blocks";
 import { Contract } from "../contract";
 import { ILocaleService } from "../localization";
-import { Bag } from "../bag";
 
 const documentsPath = "files";
 const templateBlockKey = "blocks/new-page-template";
@@ -118,7 +117,7 @@ export class PageService implements IPageService {
     private convertPage(localizedPage: Page<PageLocalizedContract>, defaultLocale: string, searchLocale: string): Page<PageContract> {
         const resultPage: Page<PageContract> = {
             value: localizedPage.value.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x)),
-            takeNext: async (n?: number): Promise<Page<PageContract>> => {
+            takeNext: async (): Promise<Page<PageContract>> => {
                 const nextLocalizedPage = await localizedPage.takeNext();
                 return this.convertPage(nextLocalizedPage, defaultLocale, searchLocale);
             }
@@ -143,33 +142,9 @@ export class PageService implements IPageService {
         const localizedQuery = Utils.localizeQuery(query, searchLocale);
 
         try {
-            const resultPage: Page<PageContract> = { value: [] };
-
             const pageOfResults = await this.objectStorage.searchObjects<PageLocalizedContract>(this.pagesPath, localizedQuery);
-
-
             return this.convertPage(pageOfResults, defaultLocale, searchLocale);
-            // const results = pageOfResults.value;
-
-            // resultPage.nextPage = pageOfResults.nextPage
-            //     ? resultPage.nextPage = query.getNextPageQuery()
-            //     : null;
-
-            // if (!results) {
-            //     return resultPage;
-            // }
-
-            // const pages = Object.values(results);
-            // resultPage.value = pages.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
-            // resultPage.takeNext = async () => {
-            //     const ppp: Page<PageContract> = {
-            //         value: []
-            //     };
-            //     const n = await pageOfResults.takeNext();
-
-            // }
-
-            // return resultPage;
+          
         }
         catch (error) {
             throw new Error(`Unable to search pages: ${error.stack || error.message}`);

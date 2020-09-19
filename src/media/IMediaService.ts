@@ -7,6 +7,12 @@ import { Query, Page } from "../persistence";
  */
 export interface IMediaService {
     /**
+     * Searches for media files that contain specified pattern in their title, description or keywords.
+     * @param query {Query<MediaContract>} Search query.
+     */
+    search(query: Query<MediaContract>): Promise<Page<MediaContract>>;
+
+    /**
      * Returns media file metadata by specified key.
      * @param key
      */
@@ -18,11 +24,9 @@ export interface IMediaService {
      */
     getMediaByPermalink(permalink: string): Promise<MediaContract>;
 
-    search(query: Query<MediaContract>): Promise<Page<MediaContract>>;
-
     /**
      * Deletes specified media file.
-     * @param media
+     * @param media {MediaContract} Contract describing media file metadata.
      */
     deleteMedia(media: MediaContract): Promise<void>;
 
@@ -42,6 +46,10 @@ export interface IMediaService {
      */
     createMediaUrl(name: string, referenceUrl: string, mimeType?: string): Promise<MediaContract>;
 
+    /**
+     * Updates media file metadata.
+     * @param media {MediaContract} Contract describing media file metadata.
+     */
     updateMedia(media: MediaContract): Promise<void>;
 
     /**

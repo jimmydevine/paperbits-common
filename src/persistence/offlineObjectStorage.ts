@@ -482,15 +482,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
 
         const remoteQuery = query.copy();
-        // remoteQuery.skipping = remoteSkip;
-        // remoteQuery.taking = remoteTake;
-
         const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<T>(path, remoteQuery);
-
-        // if (pageOfRemoteSearchResults.nextPage) {
-        //     resultPage.nextPage = query.getNextPageQuery();
-        // }
-
         const remoteSearchResults = pageOfRemoteSearchResults.value;
 
         if (pageOfRemoteSearchResults.takeNext) {

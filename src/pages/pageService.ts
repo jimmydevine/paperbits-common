@@ -114,12 +114,12 @@ export class PageService implements IPageService {
         return this.localizedContractToContract(defaultLocale, currentLocale, requestedLocale, pageContract);
     }
 
-    private convertPage(localizedPage: Page<PageLocalizedContract>, defaultLocale: string, searchLocale: string): Page<PageContract> {
+    private convertPage(localizedPage: Page<PageLocalizedContract>, defaultLocale: string, searchLocale: string, requestedLocale: string): Page<PageContract> {
         const resultPage: Page<PageContract> = {
-            value: localizedPage.value.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x)),
+            value: localizedPage.value.map(x => this.localizedContractToContract(defaultLocale, searchLocale, requestedLocale, x)),
             takeNext: async (): Promise<Page<PageContract>> => {
                 const nextLocalizedPage = await localizedPage.takeNext();
-                return this.convertPage(nextLocalizedPage, defaultLocale, searchLocale);
+                return this.convertPage(nextLocalizedPage, defaultLocale, searchLocale, requestedLocale);
             }
         };
 
@@ -143,8 +143,8 @@ export class PageService implements IPageService {
 
         try {
             const pageOfResults = await this.objectStorage.searchObjects<PageLocalizedContract>(this.pagesPath, localizedQuery);
-            return this.convertPage(pageOfResults, defaultLocale, searchLocale);
-          
+            return this.convertPage(pageOfResults, defaultLocale, searchLocale, requestedLocale);
+
         }
         catch (error) {
             throw new Error(`Unable to search pages: ${error.stack || error.message}`);

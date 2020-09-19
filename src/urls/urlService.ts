@@ -17,47 +17,36 @@ export class UrlService implements IUrlService {
         return await this.objectStorage.getObject<UrlContract>(key);
     }
     
+    private convertPage(pageOfUrls: Page<UrlContract>): Page<UrlContract> {
+        const resultPage: Page<UrlContract> = {
+            value: pageOfUrls.value,
+            takeNext: async (): Promise<Page<UrlContract>> => {
+                const nextLocalizedPage = await pageOfUrls.takeNext();
+                return this.convertPage(nextLocalizedPage);
+            }
+        };
+
+        if (!pageOfUrls.takeNext) {
+            resultPage.takeNext = null;
+        }
+
+        return resultPage;
+    }
+
     public async search(query: Query<UrlContract>): Promise<Page<UrlContract>> {
         if (!query) {
             throw new Error(`Parameter "query" not specified.`);
         }
 
-        const resultPage: Page<UrlContract> = { value: [] };
-
         try {
             const pageOfResults = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
-            const results = pageOfResults.value;
-
-            resultPage.nextPage = pageOfResults.nextPage
-                ? resultPage.nextPage = query.getNextPageQuery()
-                : null;
-
-            if (!results) {
-                return resultPage;
-            }
-
-            const uls = results;
-
-            resultPage.value = uls;
-
-            return resultPage;
+            return this.convertPage(pageOfResults);
+          
         }
         catch (error) {
-            throw new Error(`Unable to search URLs: ${error.stack || error.message}`);
+            throw new Error(`Unable to search url: ${error.stack || error.message}`);
         }
     }
-
-    // public async search(pattern: string): Promise<UrlContract[]> {
-    //     const query = Query
-    //         .from<UrlContract>()
-    //         .where("title", Operator.contains, pattern)
-    //         .orderBy("title");
-
-    //     const pageOfObjects = await this.objectStorage.searchObjects<UrlContract>(urlsPath, query);
-    //     const result = pageOfObjects;
-
-    //     return Object.values(result);
-    // }
 
     public async deleteUrl(url: UrlContract): Promise<void> {
         const deleteUrlPromise = this.objectStorage.deleteObject(url.key);

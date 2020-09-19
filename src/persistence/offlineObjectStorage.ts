@@ -454,20 +454,6 @@ export class OfflineObjectStorage implements IObjectStorage {
         const localSearchResults = await this.searchLocalChanges(path, query);
         const localSearchResultsTotalCount = localSearchResults.totalCount;
 
-
-
-        /**
-         * Check if requested page size is withing local search result set. 
-         * If yes, then no need to call remote. 
-         */
-        // if ((query.skipping + query.taking) < localSearchResultsTotalCount) {
-        //     resultPage.value = localSearchResults.value;
-        //     resultPage.nextPage = query.getNextPageQuery();
-        //     return resultPage;
-        // }
-
-        /* Pages size not filled. Try to fill the gap with remote search results. */
-
         // Adjusting remote query skip
         let remoteSkip = query.skipping - localSearchResultsTotalCount;
 
@@ -486,7 +472,7 @@ export class OfflineObjectStorage implements IObjectStorage {
         const remoteSearchResults = pageOfRemoteSearchResults.value;
 
         if (pageOfRemoteSearchResults.takeNext) {
-            resultPage.takeNext = async (n?: number): Promise<Page<T>> => {
+            resultPage.takeNext = async (): Promise<Page<T>> => {
                 const nextRemotePage = await pageOfRemoteSearchResults.takeNext();
 
                 // TODO: Remove all deleted pages from results.

@@ -2,9 +2,9 @@
 import * as Utils from "../utils";
 import * as Constants from "../constants";
 import { LayoutContract } from "../layouts/layoutContract";
-import { IObjectStorage, Query, Operator } from "../persistence";
+import { IObjectStorage, Query, Operator, Page } from "../persistence";
 import { ILayoutService, LayoutMetadata, LayoutLocalizedContract } from "./";
-import { Contract, Bag } from "..";
+import { Contract } from "..";
 import { layoutTemplate } from "./layoutTemplate";
 import { ILocaleService } from "../localization";
 
@@ -74,27 +74,41 @@ export class LayoutService implements ILayoutService {
         return this.localizedContractToContract(defaultLocale, currentLocale, requestedLocale, layoutContract);
     }
 
-    public async search(pattern: string, requestedLocale?: string): Promise<LayoutContract[]> {
+    private convertPage(localizedPage: Page<LayoutLocalizedContract>, defaultLocale: string, searchLocale: string, requestedLocale: string): Page<LayoutContract> {
+        const resultPage: Page<LayoutContract> = {
+            value: localizedPage.value.map(x => this.localizedContractToContract(defaultLocale, searchLocale, requestedLocale, x)),
+            takeNext: async (): Promise<Page<LayoutContract>> => {
+                const nextLocalizedPage = await localizedPage.takeNext();
+                return this.convertPage(nextLocalizedPage, defaultLocale, searchLocale, requestedLocale);
+            }
+        };
+
+        if (!localizedPage.takeNext) {
+            resultPage.takeNext = null;
+        }
+
+        return resultPage;
+    }
+
+    public async search(query: Query<LayoutContract>, requestedLocale?: string): Promise<Page<LayoutContract>> {
+        if (!query) {
+            throw new Error(`Parameter "query" not specified.`);
+        }
+
         const defaultLocale = await this.localeService.getDefaultLocale();
         const currentLocale = await this.localeService.getCurrentLocale();
         const searchLocale = requestedLocale || currentLocale;
 
-        let query = Query
-            .from<LayoutContract>()
-            .take(100);
+        const localizedQuery = Utils.localizeQuery(query, searchLocale);
 
-        if (pattern || requestedLocale) {
-            query = Query.from<LayoutContract>()
-                .where(`locales/${searchLocale}/title`, Operator.contains, pattern)
-                .orderBy(`locales/${searchLocale}/title`)
-                .take(100);
+        try {
+            const pageOfResults = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath, localizedQuery);
+            return this.convertPage(pageOfResults, defaultLocale, searchLocale, requestedLocale);
+
         }
-
-        const pageOfObjects = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath, query);
-        const result = pageOfObjects.value;
-        const layouts = result;
-
-        return layouts.map(x => this.localizedContractToContract(defaultLocale, searchLocale, null, x));
+        catch (error) {
+            throw new Error(`Unable to search pages: ${error.stack || error.message}`);
+        }
     }
 
     public async deleteLayout(layout: LayoutContract): Promise<void> {

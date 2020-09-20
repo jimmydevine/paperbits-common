@@ -60,8 +60,8 @@ export class MediaService implements IMediaService {
         const resultPage: Page<MediaContract> = {
             value: pageOfMedia.value,
             takeNext: async (): Promise<Page<MediaContract>> => {
-                const nextLocalizedPage = await pageOfMedia.takeNext();
-                return this.convertPage(nextLocalizedPage);
+                const nextPage = await pageOfMedia.takeNext();
+                return this.convertPage(nextPage);
             }
         };
 

@@ -191,8 +191,7 @@ export class LayoutService implements ILayoutService {
         const defaultLocale = await this.localeService.getDefaultLocale();
         const query = Query
             .from<LayoutContract>()
-            .where(`locales/${defaultLocale}/permalinkTemplate`, Operator.equals, permalinkTemplate)
-            .take(100);
+            .where(`locales/${defaultLocale}/permalinkTemplate`, Operator.equals, permalinkTemplate);
 
         const pageOfObjects = await this.objectStorage.searchObjects<LayoutContract>(this.layoutsPath, query);
         const result = pageOfObjects.value;
@@ -308,8 +307,7 @@ export class LayoutService implements ILayoutService {
         const currentLocale = await this.localeService.getCurrentLocale();
 
         const query = Query
-            .from<LayoutContract>()
-            .take(100);
+            .from<LayoutContract>();
 
         const pageOfObjects = await this.objectStorage.searchObjects<LayoutLocalizedContract>(this.layoutsPath, query);
         const result = pageOfObjects.value;

@@ -417,7 +417,6 @@ export class OfflineObjectStorage implements IObjectStorage {
         }
 
         const totalObjectsMatchingCriteria = collection.length;
-        collection = collection.slice(query.skipping, query.skipping + query.taking);
 
         return { value: collection, totalCount: totalObjectsMatchingCriteria };
     }
@@ -452,21 +451,6 @@ export class OfflineObjectStorage implements IObjectStorage {
 
         /* Find locally added/changed objects */
         const localSearchResults = await this.searchLocalChanges(path, query);
-        const localSearchResultsTotalCount = localSearchResults.totalCount;
-
-        // Adjusting remote query skip
-        let remoteSkip = query.skipping - localSearchResultsTotalCount;
-
-        if (remoteSkip < 0) {
-            remoteSkip = 0;
-        }
-
-        let remoteTake = query.taking;
-
-        if (localSearchResultsTotalCount > query.skipping) {
-            remoteTake = remoteTake - (localSearchResultsTotalCount - query.skipping);
-        }
-
         const remoteQuery = query.copy();
         const pageOfRemoteSearchResults = await this.remoteObjectStorage.searchObjects<T>(path, remoteQuery);
         const remoteSearchResults = pageOfRemoteSearchResults.value;
